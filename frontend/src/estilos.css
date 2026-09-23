@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Tokens de cor Sentempo */
+@theme {
+  --color-principal: #0F2D2E;
+  --color-destaque: #00C2A8;
+  --color-destaque-claro: #BDE8E0;
+  --color-fundo: #F7F8F7;
+  --color-texto-secundario: #6B7280;
+  --color-branco: #FFFFFF;
+
+  --font-family-sans: 'Poppins', system-ui, sans-serif;
+}
+
+/* Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Poppins', system-ui, sans-serif;
+  background-color: #F7F8F7;
+  color: #0F2D2E;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#raiz {
+  min-height: 100vh;
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F7F8F7;
+}
+::-webkit-scrollbar-thumb {
+  background: #BDE8E0;
+  border-radius: 3px;
+}
+
+/* Foco visível */
+:focus-visible {
+  outline: 2px solid #00C2A8;
+  outline-offset: 2px;
+}
+
+
+/* Transições de página */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pagina-entrar {
+  animation: entrar 0.25s ease-out;
+}
