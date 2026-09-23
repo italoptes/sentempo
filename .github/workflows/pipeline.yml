@@ -104,18 +104,11 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: publicar-imagens
     environment: production
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configurar chave SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SERVIDOR_CHAVE_SSH }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SERVIDOR_PORTA }} -H ${{ secrets.SERVIDOR_HOST }} >> ~/.ssh/known_hosts
 
       - name: Tratar nome do owner para minúsculo
         id: owner-name
@@ -123,26 +116,26 @@ jobs:
 
       - name: Transferir arquivos de infraestrutura e realizar deploy
         run: |
-          # 1. Enviar arquivo docker-compose (apenas arquivos essenciais, não o código-fonte)
-          scp -P ${{ secrets.SERVIDOR_PORTA }} compose.prod.yml ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }}:/opt/sentempo/compose.prod.yml
+          # Garantir que o diretório base existe
+          mkdir -p /opt/sentempo
           
-          # 2. Conectar via SSH e executar comandos de implantação
-          ssh -p ${{ secrets.SERVIDOR_PORTA }} ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }} << 'EOF'
-            cd /opt/sentempo
-            
-            # Garantir que o .env atualize a versão para o SHA atual do deploy
-            if grep -q "^VERSAO=" .env; then
-              sed -i "s/^VERSAO=.*/VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}/" .env
-            else
-              echo "VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}" >> .env
-            fi
-            
-            export OWNER=${{ steps.owner-name.outputs.OWNER_LOWERCASE }}
-            
-            # Pull da nova imagem e recriação dos serviços em background
-            docker compose -f compose.prod.yml pull
-            docker compose -f compose.prod.yml up -d
-          EOF
+          # Copiar o arquivo docker-compose localmente no runner para o destino final
+          cp compose.prod.yml /opt/sentempo/compose.prod.yml
+          
+          cd /opt/sentempo
+          
+          # Garantir que o .env atualize a versão para o SHA atual do deploy
+          if grep -q "^VERSAO=" .env 2>/dev/null; then
+            sed -i "s/^VERSAO=.*/VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}/" .env
+          else
+            echo "VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}" >> .env
+          fi
+          
+          export OWNER=${{ steps.owner-name.outputs.OWNER_LOWERCASE }}
+          
+          # Pull da nova imagem e recriação dos serviços em background
+          docker compose -f compose.prod.yml pull
+          docker compose -f compose.prod.yml up -d
 
       - name: Validar saúde da aplicação no servidor (Polling)
         run: |
@@ -152,8 +145,7 @@ jobs:
           END=$((SECONDS+60))
           
           while [ $SECONDS -lt $END ]; do
-            # Roda no servidor via SSH a consulta ao healthcheck
-            HTTP_STATUS=$(ssh -p ${{ secrets.SERVIDOR_PORTA }} ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }} "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/saude || echo 'Failed'")
+            HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/saude || echo 'Failed')
             
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "Deploy concluído com sucesso e serviços saudáveis!"
