@@ -1,0 +1,54 @@
+services:
+  # ── Banco de dados PostgreSQL ─────────────────────────────────────────────────
+  banco:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Backend FastAPI ────────────────────────────────────────────────────────────
+  backend:
+    image: ghcr.io/${OWNER:-italoptes}/sentempo-backend:${VERSAO:-latest}
+    restart: unless-stopped
+    environment:
+      BANCO_URL: ${BANCO_URL}
+      CHAVE_SECRETA_JWT: ${CHAVE_SECRETA_JWT}
+      ALGORITMO_JWT: ${ALGORITMO_JWT:-HS256}
+      EXPIRACAO_TOKEN_MINUTOS: ${EXPIRACAO_TOKEN_MINUTOS:-120}
+      NOME_ADMINISTRADOR: ${NOME_ADMINISTRADOR}
+      CODIGO_ADMINISTRADOR: ${CODIGO_ADMINISTRADOR}
+      ORIGENS_CORS: ${ORIGENS_CORS}
+      AMBIENTE: ${AMBIENTE:-producao}
+    depends_on:
+      banco:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/saude\")'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Frontend + Proxy Nginx ─────────────────────────────────────────────────────
+  proxy:
+    image: ghcr.io/${OWNER:-italoptes}/sentempo-frontend:${VERSAO:-latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  dados_postgres:
+    name: sentempo_dados_postgres

@@ -1,0 +1,168 @@
+name: Pipeline CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  testar-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Instalar dependências
+        run: pip install -r requirements.txt pytest
+      - name: Executar testes (Backend)
+        run: pytest -v
+
+  testar-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependências
+        run: npm ci --prefer-offline
+      - name: Executar lint
+        run: npm run lint --if-present
+      - name: Validar build (Frontend)
+        run: npm run build
+
+  validar-docker:
+    runs-on: ubuntu-latest
+    needs: [testar-backend, testar-frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar build Docker (Backend)
+        run: docker build -t test-backend ./backend
+      - name: Validar build Docker (Frontend)
+        run: docker build -t test-frontend ./frontend
+
+  publicar-imagens:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: validar-docker
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha_curto: ${{ steps.gerar-versao.outputs.SHA_CURTO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tratar nome do owner para minúsculo
+        id: owner-name
+        run: echo "OWNER_LOWERCASE=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Autenticar no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gerar tag da versão
+        id: gerar-versao
+        run: echo "SHA_CURTO=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build e Push (Backend)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner-name.outputs.OWNER_LOWERCASE }}/sentempo-backend:latest
+            ghcr.io/${{ steps.owner-name.outputs.OWNER_LOWERCASE }}/sentempo-backend:${{ steps.gerar-versao.outputs.SHA_CURTO }}
+
+      - name: Build e Push (Frontend)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner-name.outputs.OWNER_LOWERCASE }}/sentempo-frontend:latest
+            ghcr.io/${{ steps.owner-name.outputs.OWNER_LOWERCASE }}/sentempo-frontend:${{ steps.gerar-versao.outputs.SHA_CURTO }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: publicar-imagens
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar chave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVIDOR_CHAVE_SSH }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SERVIDOR_PORTA }} -H ${{ secrets.SERVIDOR_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Tratar nome do owner para minúsculo
+        id: owner-name
+        run: echo "OWNER_LOWERCASE=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Transferir arquivos de infraestrutura e realizar deploy
+        run: |
+          # 1. Enviar arquivo docker-compose (apenas arquivos essenciais, não o código-fonte)
+          scp -P ${{ secrets.SERVIDOR_PORTA }} compose.prod.yml ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }}:/opt/sentempo/compose.prod.yml
+          
+          # 2. Conectar via SSH e executar comandos de implantação
+          ssh -p ${{ secrets.SERVIDOR_PORTA }} ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }} << 'EOF'
+            cd /opt/sentempo
+            
+            # Garantir que o .env atualize a versão para o SHA atual do deploy
+            if grep -q "^VERSAO=" .env; then
+              sed -i "s/^VERSAO=.*/VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}/" .env
+            else
+              echo "VERSAO=${{ needs.publicar-imagens.outputs.sha_curto }}" >> .env
+            fi
+            
+            export OWNER=${{ steps.owner-name.outputs.OWNER_LOWERCASE }}
+            
+            # Pull da nova imagem e recriação dos serviços em background
+            docker compose -f compose.prod.yml pull
+            docker compose -f compose.prod.yml up -d
+          EOF
+
+      - name: Validar saúde da aplicação no servidor (Polling)
+        run: |
+          echo "Aguardando serviços iniciarem..."
+          
+          # Loop de validação, tentando a cada 5 segundos por até 60 segundos
+          END=$((SECONDS+60))
+          
+          while [ $SECONDS -lt $END ]; do
+            # Roda no servidor via SSH a consulta ao healthcheck
+            HTTP_STATUS=$(ssh -p ${{ secrets.SERVIDOR_PORTA }} ${{ secrets.SERVIDOR_USUARIO }}@${{ secrets.SERVIDOR_HOST }} "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/saude || echo 'Failed'")
+            
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Deploy concluído com sucesso e serviços saudáveis!"
+              exit 0
+            fi
+            
+            echo "Status atual: $HTTP_STATUS. Tentando novamente em 5 segundos..."
+            sleep 5
+          done
+          
+          echo "ERRO: O healthcheck falhou após 60 segundos."
+          exit 1

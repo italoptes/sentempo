@@ -11,6 +11,10 @@ COPY app ./app
 COPY iniciar.sh ./iniciar.sh
 RUN chmod +x ./iniciar.sh
 
+# Configuração de usuário sem privilégios (non-root)
+RUN useradd -m appuser && chown -R appuser /aplicacao
+USER appuser
+
 EXPOSE 8000
 CMD ["./iniciar.sh"]
 
