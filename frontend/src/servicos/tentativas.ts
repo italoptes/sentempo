@@ -7,6 +7,8 @@ export interface DadosTentativa {
   tempo_alvo_ms: number;
   condicao: string;
   resultado_ms: number;
+  tipo_tentativa?: string;
+  tempo_personalizado_id?: string;
 }
 
 export async function salvarTentativa(
@@ -21,6 +23,12 @@ export async function salvarTentativa(
 
 export async function excluirTodas(participanteId: string): Promise<void> {
   return requisicao<void>(`/participantes/${participanteId}/tentativas`, {
+    metodo: 'DELETE',
+  });
+}
+
+export async function excluirUma(participanteId: string, tentativaId: string): Promise<void> {
+  return requisicao<void>(`/participantes/${participanteId}/tentativas/${tentativaId}`, {
     metodo: 'DELETE',
   });
 }

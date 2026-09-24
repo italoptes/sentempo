@@ -15,7 +15,11 @@ export type EstadoRodada =
   | 'erro-rede'
   | 'concluida';
 
-export function usarExperimento(participanteId: string) {
+export function usarExperimento(
+  participanteId: string,
+  tipoTentativa: 'OFICIAL' | 'PERSONALIZADA' = 'OFICIAL',
+  tempoId?: string,
+) {
   const [estado, setEstado] = useState<EstadoRodada>('preparacao');
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [pulseCount, setPulseCount] = useState(0);
@@ -80,6 +84,8 @@ export function usarExperimento(participanteId: string) {
           tempo_alvo_ms: tempoAlvoMs,
           condicao,
           resultado_ms: resultadoMs,
+          tipo_tentativa: tipoTentativa,
+          tempo_personalizado_id: tempoId,
         });
         setEstado('concluida');
       } catch (e) {
@@ -97,7 +103,7 @@ export function usarExperimento(participanteId: string) {
         }
       }
     },
-    [estado, participanteId],
+    [estado, participanteId, tipoTentativa, tempoId],
   );
 
   const limpar = useCallback(() => {

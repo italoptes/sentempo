@@ -5,6 +5,7 @@ import { usarParticipante } from './ganchos/usarParticipante';
 import { Entrada } from './paginas/Entrada';
 import { Inicio } from './paginas/Inicio';
 import { Experimento } from './paginas/Experimento';
+import { ExperimentoLivre } from './paginas/ExperimentoLivre';
 import { Administracao } from './paginas/Administracao';
 
 export function Aplicacao() {
@@ -12,6 +13,7 @@ export function Aplicacao() {
     participanteId,
     detalhe,
     carregando,
+    modoLivre,
     definirParticipante,
     sair,
     recarregar,
@@ -44,6 +46,7 @@ export function Aplicacao() {
           ) : detalhe ? (
             <Inicio
               participante={detalhe}
+              modoLivre={modoLivre}
               onSair={sair}
               onRecarregar={recarregar}
             />
@@ -61,6 +64,21 @@ export function Aplicacao() {
             <Navigate to="/" replace />
           ) : (
             <Experimento
+              participanteId={participanteId}
+              onRecarregar={recarregar}
+            />
+          )
+        }
+      />
+
+      {/* Experimento Livre */}
+      <Route
+        path="/experimento-livre/:id/:tempo/:condicao"
+        element={
+          !participanteId ? (
+            <Navigate to="/" replace />
+          ) : (
+            <ExperimentoLivre
               participanteId={participanteId}
               onRecarregar={recarregar}
             />

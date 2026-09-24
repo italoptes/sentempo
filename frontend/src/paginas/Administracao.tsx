@@ -7,6 +7,7 @@ import { TabelaParticipantes } from '../componentes/TabelaParticipantes';
 import { detalharParticipante } from '../servicos/administracao';
 import type { ParticipanteAdministracao } from '../tipos/administracao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
+import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { rotularCondicao, rotularTempo, formatarErro, formatarErroAbsoluto } from '../utilitarios/formatacao';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
@@ -102,6 +103,8 @@ export function Administracao() {
   const [busca, setBusca] = useState('');
   const [detalhe, setDetalhe] = useState<ParticipanteAdministracao | null>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+  const [modalZerar, setModalZerar] = useState(false);
+  const [tentativaParaExcluir, setTentativaParaExcluir] = useState<{ participanteId: string, tentativaId: string } | null>(null);
 
   useEffect(() => {
     if (autenticado) {
@@ -252,18 +255,7 @@ export function Administracao() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!window.confirm('Apagar todos os resultados deste participante?')) return;
-                    const { excluirTodas } = await import('../servicos/tentativas');
-                    try {
-                      await excluirTodas(detalhe.participante.id);
-                      void handleDetalhar(detalhe.participante.id);
-                      void carregarResumo();
-                      void carregarParticipantes(pagina?.atual ?? 1, 20, busca || undefined);
-                    } catch (e) {
-                      alert('Erro ao apagar resultados');
-                    }
-                  }}
+                  onClick={() => setModalZerar(true)}
                   className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium
                     focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
                 >
@@ -319,10 +311,71 @@ export function Administracao() {
             </div>
 
             {/* Tentativas */}
-            <TabelaResultados tentativas={detalhe.participante.tentativas} />
+            <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide">Resultados Oficiais</h3>
+            <TabelaResultados
+              tentativas={detalhe.participante.tentativas}
+              onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
+            />
+
+            {/* Tentativas Livres */}
+            {detalhe.participante.tentativas_livres && detalhe.participante.tentativas_livres.length > 0 && (
+              <>
+                <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mt-6">Resultados do Modo Livre</h3>
+                <TabelaResultados
+                  tentativas={detalhe.participante.tentativas_livres}
+                  onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
+                />
+              </>
+            )}
           </section>
         )}
       </main>
+
+      {/* Modais */}
+      <ModalConfirmacao
+        aberto={modalZerar}
+        titulo="Zerar resultados"
+        mensagem="Tem certeza que deseja apagar todos os resultados oficiais e livres deste participante?"
+        textoConfirmar="Sim, apagar tudo"
+        tipo="perigo"
+        onConfirmar={async () => {
+          if (!detalhe) return;
+          setModalZerar(false);
+          const { excluirTodas } = await import('../servicos/tentativas');
+          try {
+            await excluirTodas(detalhe.participante.id);
+            void handleDetalhar(detalhe.participante.id);
+            void carregarResumo();
+            void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
+          } catch (e) {
+            alert('Erro ao apagar resultados');
+          }
+        }}
+        onCancelar={() => setModalZerar(false)}
+      />
+
+      <ModalConfirmacao
+        aberto={tentativaParaExcluir !== null}
+        titulo="Excluir resultado"
+        mensagem="Tem certeza que deseja excluir este resultado?"
+        textoConfirmar="Sim, excluir"
+        tipo="perigo"
+        onConfirmar={async () => {
+          if (!tentativaParaExcluir || !detalhe) return;
+          const { participanteId, tentativaId } = tentativaParaExcluir;
+          setTentativaParaExcluir(null);
+          try {
+            const { excluirUma } = await import('../servicos/tentativas');
+            await excluirUma(participanteId, tentativaId);
+            void handleDetalhar(participanteId);
+            void carregarResumo();
+            void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
+          } catch (e) {
+            alert('Erro ao excluir resultado');
+          }
+        }}
+        onCancelar={() => setTentativaParaExcluir(null)}
+      />
     </div>
   );
 }

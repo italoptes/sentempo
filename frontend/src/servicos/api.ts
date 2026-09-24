@@ -2,7 +2,7 @@
 
 const URL_BASE = import.meta.env.VITE_URL_API ?? '/api';
 
-type MetodoHTTP = 'GET' | 'POST';
+type MetodoHTTP = 'GET' | 'POST' | 'DELETE';
 
 interface OpcoesRequisicao {
   metodo?: MetodoHTTP;

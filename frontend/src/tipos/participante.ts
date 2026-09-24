@@ -31,5 +31,6 @@ export interface Tentativa {
 
 export interface ParticipanteDetalhe extends ParticipanteAcesso {
   tentativas: Tentativa[];
+  tentativas_livres: Tentativa[];
   combinacoes: Combinacao[];
 }

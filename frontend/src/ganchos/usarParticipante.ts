@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ParticipanteDetalhe } from '../tipos/participante';
+import type { ModoLivreStatus } from '../servicos/modo_livre';
 import { consultarParticipante } from '../servicos/participantes';
 
 const CHAVE_ID = 'sentempo_participante_id';
@@ -14,6 +15,8 @@ export function usarParticipante() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const [modoLivre, setModoLivre] = useState<ModoLivreStatus | null>(null);
+
   const definirParticipante = useCallback((id: string) => {
     sessionStorage.setItem(CHAVE_ID, id);
     setParticipanteId(id);
@@ -23,6 +26,7 @@ export function usarParticipante() {
     sessionStorage.removeItem(CHAVE_ID);
     setParticipanteId(null);
     setDetalhe(null);
+    setModoLivre(null);
   }, []);
 
   const recarregar = useCallback(async () => {
@@ -32,6 +36,13 @@ export function usarParticipante() {
     try {
       const dados = await consultarParticipante(participanteId);
       setDetalhe(dados);
+      try {
+        const { obterStatusModoLivre } = await import('../servicos/modo_livre');
+        const statusModo = await obterStatusModoLivre(participanteId);
+        setModoLivre(statusModo);
+      } catch (e) {
+        console.error('Erro ao carregar status do Modo Livre', e);
+      }
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao carregar participante');
     } finally {
@@ -45,5 +56,5 @@ export function usarParticipante() {
     }
   }, [participanteId, recarregar]);
 
-  return { participanteId, detalhe, carregando, erro, definirParticipante, sair, recarregar };
+  return { participanteId, detalhe, carregando, erro, modoLivre, definirParticipante, sair, recarregar };
 }
