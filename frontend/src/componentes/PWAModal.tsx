@@ -29,9 +29,11 @@ export function PWAModal() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Quando receber o evento, mostra o modal
-      setMostrarPromptInstalacao(true);
-      setTimeout(() => setAnimando(true), 10);
+      // Aguarda 1 segundo antes de exibir o modal
+      setTimeout(() => {
+        setMostrarPromptInstalacao(true);
+        setTimeout(() => setAnimando(true), 10);
+      }, 1000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
