@@ -9,6 +9,7 @@ from app.banco.base import Base
 
 if TYPE_CHECKING:
     from app.entidades.tentativa import Tentativa
+    from app.entidades.tempo_personalizado import TempoPersonalizado
 
 
 class Participante(Base):
@@ -31,5 +32,8 @@ class Participante(Base):
     )
 
     tentativas: Mapped[list["Tentativa"]] = relationship(
+        back_populates="participante", cascade="all, delete-orphan"
+    )
+    tempos_personalizados: Mapped[list["TempoPersonalizado"]] = relationship(
         back_populates="participante", cascade="all, delete-orphan"
     )

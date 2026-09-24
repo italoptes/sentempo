@@ -43,6 +43,7 @@ class ParticipanteAcessoResposta(BaseModel):
 
 class ParticipanteDetalheResposta(ParticipanteAcessoResposta):
     tentativas: list[TentativaResposta]
+    tentativas_livres: list[TentativaResposta] = []
     combinacoes: list[CombinacaoResposta]
 
 

@@ -6,7 +6,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.entidades.participante import Participante
-from app.entidades.tentativa import Condicao, Tentativa
+from app.entidades.tentativa import Condicao, Tentativa, TipoTentativa
 from app.esquemas.administracao import (
     EstatisticaItemResposta,
     EstatisticasResposta,
@@ -48,6 +48,7 @@ class EstatisticasServico:
         participantes_total = int(self.sessao.scalar(select(func.count(Participante.id))) or 0)
         subconsulta = (
             select(Tentativa.participante_id)
+            .where(Tentativa.tipo_tentativa == TipoTentativa.OFICIAL)
             .group_by(Tentativa.participante_id)
             .having(func.count(Tentativa.id) == 9)
             .subquery()
@@ -63,7 +64,7 @@ class EstatisticasServico:
                 func.sum(case((Tentativa.erro_ms < 0, 1), else_=0)),
                 func.sum(case((Tentativa.erro_ms > 0, 1), else_=0)),
                 func.sum(case((Tentativa.erro_ms == 0, 1), else_=0)),
-            )
+            ).where(Tentativa.tipo_tentativa == TipoTentativa.OFICIAL)
         ).one()
         total = int(linha[0] or 0)
         esperadas = participantes_total * 9
@@ -91,7 +92,9 @@ class EstatisticasServico:
                 func.sum(case((Tentativa.erro_ms < 0, 1), else_=0)),
                 func.sum(case((Tentativa.erro_ms > 0, 1), else_=0)),
                 func.sum(case((Tentativa.erro_ms == 0, 1), else_=0)),
-            ).group_by(coluna)
+            )
+            .where(Tentativa.tipo_tentativa == TipoTentativa.OFICIAL)
+            .group_by(coluna)
         ).all()
         por_chave = {
             (linha[0].value if isinstance(linha[0], Condicao) else str(linha[0])): linha
@@ -139,22 +142,24 @@ class EstatisticasServico:
     ) -> tuple[int, list[ParticipanteListaItem]]:
         total = self.participantes.contar(busca)
         entidades = self.participantes.listar(pagina, tamanho, busca)
-        itens = [
-            ParticipanteListaItem(
-                id=item.id,
-                nome=item.nome,
-                codigo=item.codigo,
-                criado_em=item.criado_em,
-                tentativas_concluidas=len(item.tentativas),
-                situacao="COMPLETO" if len(item.tentativas) == 9 else "INCOMPLETO",
+        itens = []
+        for item in entidades:
+            tentativas_oficiais = [t for t in item.tentativas if t.tipo_tentativa == TipoTentativa.OFICIAL]
+            itens.append(
+                ParticipanteListaItem(
+                    id=item.id,
+                    nome=item.nome,
+                    codigo=item.codigo,
+                    criado_em=item.criado_em,
+                    tentativas_concluidas=len(tentativas_oficiais),
+                    situacao="COMPLETO" if len(tentativas_oficiais) == 9 else "INCOMPLETO",
+                )
             )
-            for item in entidades
-        ]
         return total, itens
 
     @staticmethod
     def resumo_individual(participante: Participante) -> ResumoIndividualResposta:
-        tentativas = participante.tentativas
+        tentativas = [t for t in participante.tentativas if t.tipo_tentativa == TipoTentativa.OFICIAL]
         abaixo = sum(item.erro_ms < 0 for item in tentativas)
         acima = sum(item.erro_ms > 0 for item in tentativas)
         igual = sum(item.erro_ms == 0 for item in tentativas)

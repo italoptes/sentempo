@@ -50,3 +50,18 @@ async def limpar_tentativas(
         TentativaServico(sessao).excluir_todas_de(participante_id)
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
+
+
+@roteador.delete(
+    "/{participante_id}/tentativas/{tentativa_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def excluir_uma_tentativa(
+    participante_id: uuid.UUID,
+    tentativa_id: uuid.UUID,
+    sessao: Annotated[Session, Depends(obter_sessao)],
+) -> None:
+    try:
+        TentativaServico(sessao).excluir_uma(participante_id, tentativa_id)
+    except ParticipanteNaoEncontrado as erro:
+        raise HTTPException(status_code=404, detail="Participante não encontrado") from erro

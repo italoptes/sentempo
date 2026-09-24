@@ -51,7 +51,7 @@ class ParticipanteServico:
 
     @staticmethod
     def resposta_acesso(participante: Participante) -> ParticipanteAcessoResposta:
-        quantidade = len(participante.tentativas)
+        quantidade = sum(1 for t in participante.tentativas if t.tipo_tentativa.name == "OFICIAL")
         return ParticipanteAcessoResposta(
             id=participante.id,
             nome=participante.nome,
@@ -61,8 +61,11 @@ class ParticipanteServico:
 
     @staticmethod
     def resposta_detalhe(participante: Participante) -> ParticipanteDetalheResposta:
+        tentativas_oficiais = [t for t in participante.tentativas if t.tipo_tentativa.name == "OFICIAL"]
+        tentativas_livres = [t for t in participante.tentativas if t.tipo_tentativa.name == "PERSONALIZADA"]
+        
         tentativas_ordenadas = sorted(
-            participante.tentativas,
+            tentativas_oficiais,
             key=lambda item: (item.tempo_alvo_ms, item.condicao.value),
         )
         concluidas = {
@@ -84,6 +87,7 @@ class ParticipanteServico:
             codigo=participante.codigo,
             progresso=ProgressoResposta(concluidas=len(tentativas_ordenadas)),
             tentativas=[TentativaResposta.model_validate(item) for item in tentativas_ordenadas],
+            tentativas_livres=[TentativaResposta.model_validate(item) for item in sorted(tentativas_livres, key=lambda i: i.criado_em, reverse=True)],
             combinacoes=combinacoes,
         )
 
