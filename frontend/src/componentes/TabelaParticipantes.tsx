@@ -9,10 +9,11 @@ interface Props {
   onPaginar: (p: number) => void;
   onBuscar: (busca: string) => void;
   onDetalhar: (id: string) => void;
+  onExcluirConta: (id: string) => void;
   carregando: boolean;
 }
 
-export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, carregando }: Props) {
+export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, onExcluirConta, carregando }: Props) {
   const [busca, setBusca] = useState('');
 
   function handleBusca(e: React.FormEvent) {
@@ -52,7 +53,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, c
               <th scope="col" className="px-4 py-3 text-center font-semibold">Tentativas</th>
               <th scope="col" className="px-4 py-3 text-center font-semibold">Situação</th>
               <th scope="col" className="px-4 py-3 text-left font-semibold">Criado em</th>
-              <th scope="col" className="px-4 py-3 text-center font-semibold">Detalhes</th>
+              <th scope="col" className="px-4 py-3 text-center font-semibold">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -75,13 +76,21 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, c
                     </span>
                   </td>
                   <td className="px-4 py-3 text-texto-secundario text-xs">{formatarData(item.criado_em)}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-3 text-center flex justify-center gap-2 items-center">
                     <button
                       type="button"
                       onClick={() => onDetalhar(item.id)}
                       className="text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
                       Ver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onExcluirConta(item.id)}
+                      className="text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
+                        focus-visible:outline-2 focus-visible:outline-destaque rounded"
+                    >
+                      Excluir
                     </button>
                   </td>
                 </tr>

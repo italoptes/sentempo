@@ -49,6 +49,13 @@ class ParticipanteServico:
     def obter(self, participante_id: uuid.UUID) -> Participante | None:
         return self.repositorio.buscar_por_id(participante_id)
 
+    def excluir(self, participante_id: uuid.UUID) -> bool:
+        apagados = self.repositorio.excluir(participante_id)
+        if apagados > 0:
+            self.sessao.commit()
+            return True
+        return False
+
     @staticmethod
     def resposta_acesso(participante: Participante) -> ParticipanteAcessoResposta:
         quantidade = sum(1 for t in participante.tentativas if t.tipo_tentativa.name == "OFICIAL")

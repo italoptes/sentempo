@@ -104,6 +104,7 @@ export function Administracao() {
   const [detalhe, setDetalhe] = useState<ParticipanteAdministracao | null>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
   const [modalZerar, setModalZerar] = useState(false);
+  const [modalExcluirConta, setModalExcluirConta] = useState<string | null>(null);
   const [tentativaParaExcluir, setTentativaParaExcluir] = useState<{ participanteId: string, tentativaId: string } | null>(null);
 
   useEffect(() => {
@@ -239,6 +240,7 @@ export function Administracao() {
               onPaginar={handlePaginar}
               onBuscar={handleBuscar}
               onDetalhar={handleDetalhar}
+              onExcluirConta={(id) => setModalExcluirConta(id)}
               carregando={carregando || carregandoDetalhe}
             />
           </section>
@@ -255,8 +257,16 @@ export function Administracao() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalZerar(true)}
+                  onClick={() => setModalExcluirConta(detalhe.participante.id)}
                   className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium
+                    focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
+                >
+                  Excluir conta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalZerar(true)}
+                  className="text-texto-secundario hover:text-principal transition-colors text-sm font-medium
                     focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
                 >
                   Zerar resultados
@@ -352,6 +362,31 @@ export function Administracao() {
           }
         }}
         onCancelar={() => setModalZerar(false)}
+      />
+
+      <ModalConfirmacao
+        aberto={modalExcluirConta !== null}
+        titulo="Excluir conta"
+        mensagem="ATENÇÃO: Tem certeza que deseja apagar a conta deste participante? TODOS os resultados oficiais, livres e configurações de tempos personalizados serão apagados permanentemente."
+        textoConfirmar="Sim, excluir conta"
+        tipo="perigo"
+        onConfirmar={async () => {
+          if (!modalExcluirConta || !token) return;
+          const idParaExcluir = modalExcluirConta;
+          setModalExcluirConta(null);
+          const { excluirParticipante } = await import('../servicos/administracao');
+          try {
+            await excluirParticipante(token, idParaExcluir);
+            if (detalhe?.participante.id === idParaExcluir) {
+              setDetalhe(null);
+            }
+            void carregarResumo();
+            void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
+          } catch (e) {
+            alert('Erro ao apagar conta');
+          }
+        }}
+        onCancelar={() => setModalExcluirConta(null)}
       />
 
       <ModalConfirmacao

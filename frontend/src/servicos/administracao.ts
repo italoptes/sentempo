@@ -58,3 +58,10 @@ export function urlExportacaoCSV(token: string): string {
   const urlBase = import.meta.env.VITE_URL_API ?? '/api';
   return `${urlBase}/administracao/exportacao.csv?token=${encodeURIComponent(token)}`;
 }
+
+export async function excluirParticipante(token: string, id: string): Promise<void> {
+  return requisicao<void>(`/administracao/participantes/${id}`, {
+    metodo: 'DELETE',
+    token,
+  });
+}

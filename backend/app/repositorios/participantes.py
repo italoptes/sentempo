@@ -48,3 +48,10 @@ class RepositorioParticipantes:
         ).limit(tamanho)
         return list(self.sessao.scalars(consulta).all())
 
+    def excluir(self, participante_id: uuid.UUID) -> int:
+        from sqlalchemy import delete
+        comando = delete(Participante).where(Participante.id == participante_id)
+        resultado = self.sessao.execute(comando)
+        self.sessao.flush()
+        return resultado.rowcount
+

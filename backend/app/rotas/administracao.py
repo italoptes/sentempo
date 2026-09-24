@@ -103,6 +103,19 @@ async def detalhar_participante(
     )
 
 
+@roteador.delete(
+    "/participantes/{participante_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(exigir_administrador)],
+)
+async def excluir_participante(
+    participante_id: uuid.UUID,
+    sessao: Annotated[Session, Depends(obter_sessao)],
+) -> None:
+    sucesso = ParticipanteServico(sessao).excluir(participante_id)
+    if not sucesso:
+        raise HTTPException(status_code=404, detail="Participante não encontrado")
+
 @roteador.get(
     "/exportacao.csv",
     dependencies=[Depends(exigir_administrador)],
