@@ -23,7 +23,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleBusca} className="flex gap-2">
+      <form onSubmit={handleBusca} className="flex flex-col sm:flex-row gap-2">
         <input
           id="campo-busca-participante"
           type="text"
@@ -44,8 +44,60 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
         </button>
       </form>
 
-      <div className="overflow-x-auto rounded-xl border border-destaque-claro">
-        <table className="w-full text-sm" aria-label="Lista de participantes">
+      {/* Visão de Cards para Celular */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {pagina.itens.length === 0 ? (
+          <p className="text-center text-texto-secundario italic py-4">
+            Nenhum participante encontrado.
+          </p>
+        ) : (
+          pagina.itens.map((item) => (
+            <div key={item.id} className="bg-branco rounded-xl border border-destaque-claro p-4 space-y-3 shadow-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-principal font-semibold">{item.nome}</p>
+                  <p className="text-texto-secundario text-xs font-mono">{item.codigo}</p>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium
+                  ${item.situacao === 'COMPLETO' ? 'bg-destaque-claro text-principal' : 'bg-fundo text-texto-secundario border border-destaque-claro'}`}>
+                  {item.situacao === 'COMPLETO' ? '✓ Completo' : 'Incompleto'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-texto-secundario">Tentativas:</span>
+                <span className="font-medium text-principal">{item.tentativas_concluidas}/9</span>
+              </div>
+              
+              <div className="flex justify-between items-center text-xs text-texto-secundario">
+                <span>Criado em:</span>
+                <span>{formatarData(item.criado_em)}</span>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2 border-t border-destaque-claro/50 mt-2">
+                <button
+                  type="button"
+                  onClick={() => onExcluirConta(item.id)}
+                  className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
+                >
+                  Excluir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDetalhar(item.id)}
+                  className="text-destaque font-medium hover:underline text-sm"
+                >
+                  Ver detalhes
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Visão de Tabela para Desktop */}
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-destaque-claro shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap" aria-label="Lista de participantes">
           <thead>
             <tr className="bg-destaque-claro text-principal">
               <th scope="col" className="px-4 py-3 text-left font-semibold">Nome</th>

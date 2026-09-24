@@ -110,7 +110,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
             <div className="space-y-4">
               <p className="text-texto-secundario text-sm">Crie tentativas com o tempo que quiser (1 a 120 segundos). Estas tentativas não afetam as estatísticas principais.</p>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="number"
                   placeholder="Tempo em segundos..."

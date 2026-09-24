@@ -15,7 +15,7 @@ export function SeletorTempo({ tempoSelecionado, onSelecionar }: Props) {
       <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
         1. Escolha o tempo-alvo
       </h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {TEMPOS.map((tempo) => {
           const selecionado = tempoSelecionado === tempo;
           return (

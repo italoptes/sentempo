@@ -249,12 +249,12 @@ export function Administracao() {
         {/* Painel de detalhe do participante */}
         {detalhe && (
           <section aria-label="Detalhe do participante" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-principal">{detalhe.participante.nome}</h2>
                 <p className="text-texto-secundario text-sm font-mono">Código: {detalhe.participante.codigo}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setModalExcluirConta(detalhe.participante.id)}
@@ -286,7 +286,7 @@ export function Administracao() {
             {/* Combinações */}
             <div>
               <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Combinações</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {detalhe.participante.combinacoes.map((c) => (
                   <div
                     key={`${c.tempo_alvo_ms}-${c.condicao}`}
@@ -305,7 +305,7 @@ export function Administracao() {
             </div>
 
             {/* Resumo individual */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-fundo rounded-xl p-3 text-center">
                 <p className="text-xs text-texto-secundario mb-1">Erro médio</p>
                 <p className="font-semibold text-principal">{formatarErro(detalhe.resumo.erro_medio_ms)}</p>

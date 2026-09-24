@@ -76,8 +76,45 @@ export function TabelaEstatisticas({ titulo, itens }: PropsTabelaEstatisticas) {
   return (
     <div>
       <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">{titulo}</h3>
-      <div className="overflow-x-auto rounded-xl border border-destaque-claro">
-        <table className="w-full text-sm" aria-label={titulo}>
+      
+      {/* Visão de Cards para Celular */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {itens.map((item) => (
+          <div key={item.chave} className="bg-branco rounded-xl border border-destaque-claro p-4 space-y-2 shadow-sm">
+            <div className="flex justify-between items-center pr-2">
+              <span className="text-xs text-texto-secundario uppercase font-semibold">Grupo</span>
+              <span className="text-principal font-semibold text-sm">{item.chave}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-texto-secundario uppercase font-semibold">Tentativas</span>
+              <span className="text-principal text-sm">{item.quantidade_tentativas}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-texto-secundario uppercase font-semibold">Erro médio</span>
+              <span className={`font-mono text-sm font-medium ${item.erro_medio_ms < 0 ? 'text-blue-600' : item.erro_medio_ms > 0 ? 'text-orange-600' : 'text-green-700'}`}>
+                {item.erro_medio_ms > 0 ? '+' : ''}{item.erro_medio_ms.toFixed(1)} ms
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-texto-secundario uppercase font-semibold">Err. abs. médio</span>
+              <span className="text-principal font-mono text-sm">{item.erro_absoluto_medio_ms.toFixed(1)} ms</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-texto-secundario uppercase font-semibold">Tendência</span>
+              <span className="inline-flex items-center gap-1 text-xs">
+                <span className="text-blue-600">↓{item.abaixo}</span>
+                <span className="text-orange-600">↑{item.acima}</span>
+                <span className="text-green-700">={item.igual}</span>
+                <span className="ml-1 font-semibold text-principal">({item.tendencia_predominante})</span>
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Visão de Tabela para Desktop */}
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-destaque-claro shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap" aria-label={titulo}>
           <thead>
             <tr className="bg-destaque-claro text-principal">
               <th scope="col" className="px-4 py-3 text-left font-semibold">Grupo</th>
