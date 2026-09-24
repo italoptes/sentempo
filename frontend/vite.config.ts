@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['images/icone_sentempo.png'],
       devOptions: {
         enabled: true,
         type: 'module',
@@ -43,19 +43,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          },
-          {
-            src: 'pwa-192x192.png',
+            src: '/images/icone_sentempo.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/images/icone_sentempo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
