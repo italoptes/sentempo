@@ -7,3 +7,4 @@ pydantic-settings==2.10.1
 PyJWT==2.10.1
 alembic==1.16.5
 python-multipart==0.0.20
+slowapi==0.1.9

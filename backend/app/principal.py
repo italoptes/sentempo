@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
 
 from app.nucleo.configuracoes import obter_configuracoes
+from app.nucleo.limitador import handler_limite_excedido, limitador
 from app.rotas import administracao, modo_livre, participantes, saude, tentativas
 
 
@@ -15,6 +17,10 @@ aplicacao = FastAPI(
     redoc_url="/redoc" if documentacao else None,
     openapi_url="/openapi.json" if documentacao else None,
 )
+
+aplicacao.state.limiter = limitador
+aplicacao.add_exception_handler(RateLimitExceeded, handler_limite_excedido)
+
 aplicacao.add_middleware(
     CORSMiddleware,
     allow_origins=configuracoes.origens_cors,

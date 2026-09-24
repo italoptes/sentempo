@@ -2,7 +2,7 @@ import math
 import uuid
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from app.esquemas.administracao import (
 )
 from app.nucleo.configuracoes import Configuracoes, obter_configuracoes
 from app.nucleo.dependencias import exigir_administrador
+from app.nucleo.limitador import limitador
 from app.nucleo.seguranca import credenciais_validas, criar_token
 from app.servicos.estatisticas_servico import EstatisticasServico
 from app.servicos.exportacao_servico import ExportacaoServico
@@ -27,7 +28,9 @@ roteador = APIRouter(prefix="/administracao", tags=["administração"])
 
 
 @roteador.post("/acessar", response_model=TokenResposta)
+@limitador.limit("5/minute")
 async def acessar_administracao(
+    request: Request,
     dados: AcessoAdministracao,
     configuracoes: Annotated[Configuracoes, Depends(obter_configuracoes)],
 ) -> TokenResposta:

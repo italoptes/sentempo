@@ -64,3 +64,28 @@ def test_csv_tem_bom_cabecalho_e_dados(cliente, participante, token_administrati
     assert "participante_id;nome;codigo;tempo_alvo_ms" in resposta.text
     assert ";Ana Silva;0042;30000;SEM_ESTIMULO;" in resposta.text
 
+def test_rate_limit_admin_login(cliente):
+    ip_bloqueado = "192.168.1.100"
+    for _ in range(5):
+        resp = cliente.post(
+            "/api/administracao/acessar", 
+            json={"nome": "PESQUISADOR", "codigo": "ERRADO"},
+            headers={"X-Forwarded-For": ip_bloqueado}
+        )
+        assert resp.status_code == 401
+        
+    resp_limit = cliente.post(
+        "/api/administracao/acessar", 
+        json={"nome": "PESQUISADOR", "codigo": "ERRADO"},
+        headers={"X-Forwarded-For": ip_bloqueado}
+    )
+    assert resp_limit.status_code == 429
+    assert resp_limit.json()["detail"] == "Muitas tentativas. Tente novamente em instantes."
+
+    ip_livre = "192.168.1.101"
+    resp_other = cliente.post(
+        "/api/administracao/acessar", 
+        json={"nome": "PESQUISADOR", "codigo": "ERRADO"},
+        headers={"X-Forwarded-For": ip_livre}
+    )
+    assert resp_other.status_code == 401
