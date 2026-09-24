@@ -54,3 +54,11 @@ class TentativaServico:
             self.sessao.rollback()
             raise TentativaDuplicada from erro_banco
 
+    def excluir_todas_de(self, participante_id: uuid.UUID) -> None:
+        participante = self.participantes.buscar_por_id(participante_id)
+        if participante is None:
+            raise ParticipanteNaoEncontrado
+            
+        self.tentativas.excluir_por_participante(participante_id)
+        self.sessao.commit()
+

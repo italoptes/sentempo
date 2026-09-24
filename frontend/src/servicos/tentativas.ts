@@ -18,3 +18,9 @@ export async function salvarTentativa(
     corpo: dados,
   });
 }
+
+export async function excluirTodas(participanteId: string): Promise<void> {
+  return requisicao<void>(`/participantes/${participanteId}/tentativas`, {
+    metodo: 'DELETE',
+  });
+}

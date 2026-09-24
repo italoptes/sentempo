@@ -249,15 +249,36 @@ export function Administracao() {
                 <h2 className="text-lg font-semibold text-principal">{detalhe.participante.nome}</h2>
                 <p className="text-texto-secundario text-sm font-mono">Código: {detalhe.participante.codigo}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setDetalhe(null)}
-                className="text-texto-secundario hover:text-principal transition-colors text-sm
-                  focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
-                aria-label="Fechar painel de detalhe"
-              >
-                ✕ Fechar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm('Apagar todos os resultados deste participante?')) return;
+                    const { excluirTodas } = await import('../servicos/tentativas');
+                    try {
+                      await excluirTodas(detalhe.participante.id);
+                      void handleDetalhar(detalhe.participante.id);
+                      void carregarResumo();
+                      void carregarParticipantes(pagina?.atual ?? 1, 20, busca || undefined);
+                    } catch (e) {
+                      alert('Erro ao apagar resultados');
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium
+                    focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
+                >
+                  Zerar resultados
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetalhe(null)}
+                  className="text-texto-secundario hover:text-principal transition-colors text-sm
+                    focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
+                  aria-label="Fechar painel de detalhe"
+                >
+                  ✕ Fechar
+                </button>
+              </div>
             </div>
 
             {/* Combinações */}

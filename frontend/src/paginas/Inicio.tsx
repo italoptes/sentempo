@@ -92,9 +92,27 @@ export function Inicio({ participante, onSair, onRecarregar }: Props) {
         {/* Tabela de resultados */}
         {participante.tentativas.length > 0 && (
           <section aria-label="Resultados">
-            <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
-              Seus resultados
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide">
+                Seus resultados
+              </h2>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm('Tem certeza que deseja apagar todos os seus resultados e começar de novo?')) return;
+                  const { excluirTodas } = await import('../servicos/tentativas');
+                  try {
+                    await excluirTodas(participante.id);
+                    await onRecarregar();
+                  } catch (e) {
+                    alert('Erro ao apagar resultados');
+                  }
+                }}
+                className="text-xs text-red-500 hover:text-red-700 underline font-medium"
+              >
+                Refazer experimento
+              </button>
+            </div>
             <TabelaResultados tentativas={participante.tentativas} />
           </section>
         )}

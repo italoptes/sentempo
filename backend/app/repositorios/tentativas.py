@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.entidades.tentativa import Condicao, Tentativa
@@ -28,4 +28,9 @@ class RepositorioTentativas:
     def listar_todas(self) -> list[Tentativa]:
         consulta = select(Tentativa).order_by(Tentativa.criado_em.asc())
         return list(self.sessao.scalars(consulta).all())
+
+    def excluir_por_participante(self, participante_id: uuid.UUID) -> None:
+        comando = delete(Tentativa).where(Tentativa.participante_id == participante_id)
+        self.sessao.execute(comando)
+        self.sessao.flush()
 

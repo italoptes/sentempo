@@ -36,3 +36,17 @@ async def salvar_tentativa(
             status_code=409,
             detail="Esta combinação já foi concluída pelo participante",
         ) from erro
+
+
+@roteador.delete(
+    "/{participante_id}/tentativas",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def limpar_tentativas(
+    participante_id: uuid.UUID,
+    sessao: Annotated[Session, Depends(obter_sessao)],
+) -> None:
+    try:
+        TentativaServico(sessao).excluir_todas_de(participante_id)
+    except ParticipanteNaoEncontrado as erro:
+        raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
