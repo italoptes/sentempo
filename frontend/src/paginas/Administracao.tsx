@@ -115,6 +115,14 @@ export function Administracao() {
     }
   }, [autenticado, carregarResumo, carregarParticipantes]);
 
+  useEffect(() => {
+    if (detalhe) {
+      setTimeout(() => {
+        document.getElementById('painel-detalhe')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, [detalhe]);
+
   const handlePaginar = useCallback(
     (p: number) => {
       void carregarParticipantes(p, 20, busca || undefined);
@@ -285,7 +293,7 @@ export function Administracao() {
 
         {/* Painel de detalhe do participante */}
         {detalhe && (
-          <section aria-label="Detalhe do participante" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
+          <section id="painel-detalhe" aria-label="Detalhe do participante" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-principal">{detalhe.participante.nome}</h2>
