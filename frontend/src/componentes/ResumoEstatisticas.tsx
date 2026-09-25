@@ -75,7 +75,7 @@ interface PropsTabelaEstatisticas {
 export function TabelaEstatisticas({ titulo, itens }: PropsTabelaEstatisticas) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">{titulo}</h3>
+      {titulo && <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">{titulo}</h3>}
       
       {/* Visão de Cards para Celular */}
       <div className="grid grid-cols-1 gap-3 md:hidden">

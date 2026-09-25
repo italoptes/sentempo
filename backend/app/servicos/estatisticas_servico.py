@@ -82,6 +82,63 @@ class EstatisticasServico:
         )
 
     def estatisticas(self, agrupar_por: str) -> EstatisticasResposta:
+        if agrupar_por == "tempo_condicao":
+            linhas = self.sessao.execute(
+                select(
+                    Tentativa.tempo_alvo_ms,
+                    Tentativa.condicao,
+                    func.count(Tentativa.id),
+                    func.avg(Tentativa.erro_ms),
+                    func.avg(Tentativa.erro_absoluto_ms),
+                    func.sum(case((Tentativa.erro_ms < 0, 1), else_=0)),
+                    func.sum(case((Tentativa.erro_ms > 0, 1), else_=0)),
+                    func.sum(case((Tentativa.erro_ms == 0, 1), else_=0)),
+                )
+                .where(Tentativa.tipo_tentativa == TipoTentativa.OFICIAL)
+                .group_by(Tentativa.tempo_alvo_ms, Tentativa.condicao)
+            ).all()
+
+            por_chave = {
+                f"{linha[0]}_{linha[1].value if isinstance(linha[1], Condicao) else str(linha[1])}": linha
+                for linha in linhas
+            }
+
+            tempos = ["5000", "15000", "30000"]
+            condicoes = [item.value for item in Condicao]
+            chaves = [f"{t}_{c}" for t in tempos for c in condicoes]
+
+            itens: list[EstatisticaItemResposta] = []
+            for chave in chaves:
+                linha = por_chave.get(chave)
+                if linha is None:
+                    itens.append(
+                        EstatisticaItemResposta(
+                            chave=chave,
+                            quantidade_tentativas=0,
+                            erro_medio_ms=0,
+                            erro_absoluto_medio_ms=0,
+                            abaixo=0,
+                            acima=0,
+                            igual=0,
+                            tendencia_predominante="EMPATE",
+                        )
+                    )
+                    continue
+                abaixo, acima, igual = int(linha[5] or 0), int(linha[6] or 0), int(linha[7] or 0)
+                itens.append(
+                    EstatisticaItemResposta(
+                        chave=chave,
+                        quantidade_tentativas=int(linha[2]),
+                        erro_medio_ms=round(float(linha[3] or 0), 3),
+                        erro_absoluto_medio_ms=round(float(linha[4] or 0), 3),
+                        abaixo=abaixo,
+                        acima=acima,
+                        igual=igual,
+                        tendencia_predominante=identificar_tendencia(abaixo, acima, igual),
+                    )
+                )
+            return EstatisticasResposta(agrupar_por=agrupar_por, itens=itens)
+
         coluna = Tentativa.condicao if agrupar_por == "condicao" else Tentativa.tempo_alvo_ms
         linhas = self.sessao.execute(
             select(
@@ -105,7 +162,7 @@ class EstatisticasServico:
             if agrupar_por == "condicao"
             else ["5000", "15000", "30000"]
         )
-        itens: list[EstatisticaItemResposta] = []
+        itens = []
         for chave in chaves:
             linha = por_chave.get(chave)
             if linha is None:

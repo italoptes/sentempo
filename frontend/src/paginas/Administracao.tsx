@@ -85,7 +85,7 @@ function TelaLogin({
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export function Administracao() {
-  const {
+    const {
     token,
     autenticado,
     carregando,
@@ -93,6 +93,7 @@ export function Administracao() {
     resumo,
     estatisticasCondicao,
     estatisticasTempo,
+    estatisticasTempoCondicao,
     pagina,
     login,
     sair,
@@ -187,15 +188,51 @@ export function Administracao() {
             <div className="grid md:grid-cols-2 gap-8">
               {estatisticasCondicao && (
                 <section aria-label="Estatísticas por condição">
-                  <TabelaEstatisticas titulo="Por condição" itens={estatisticasCondicao.itens} />
+                  <TabelaEstatisticas titulo="Por condição" itens={estatisticasCondicao.itens.map(i => ({...i, chave: rotularCondicao(i.chave)}))} />
                 </section>
               )}
               {estatisticasTempo && (
                 <section aria-label="Estatísticas por tempo">
-                  <TabelaEstatisticas titulo="Por tempo" itens={estatisticasTempo.itens} />
+                  <TabelaEstatisticas titulo="Por tempo" itens={estatisticasTempo.itens.map(i => ({...i, chave: rotularTempo(Number(i.chave))}))} />
                 </section>
               )}
             </div>
+            
+            {estatisticasTempoCondicao && (
+              <section aria-label="Estatísticas por tempo e condição">
+                <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-4">Por tempo e condição</h2>
+                <div className="space-y-4">
+                  {['5000', '15000', '30000'].map((tempo) => {
+                    const itensDoTempo = estatisticasTempoCondicao.itens
+                      .filter((i) => i.chave.startsWith(`${tempo}_`))
+                      .map((i) => {
+                        const condicaoRestante = i.chave.substring(tempo.length + 1);
+                        return {
+                          ...i,
+                          chave: rotularCondicao(condicaoRestante),
+                        };
+                      });
+
+                    if (itensDoTempo.length === 0) return null;
+
+                    return (
+                      <details
+                        key={tempo}
+                        className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
+                      >
+                        <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
+                          {rotularTempo(Number(tempo))}
+                          <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
+                          <TabelaEstatisticas titulo="" itens={itensDoTempo} />
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
           </>
         ) : carregando ? (
           <p className="text-texto-secundario animate-pulse">Carregando dados...</p>

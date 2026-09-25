@@ -22,6 +22,7 @@ export function usarAdministracao() {
   const [resumo, setResumo] = useState<ResumoAdministracao | null>(null);
   const [estatisticasCondicao, setEstatisticasCondicao] = useState<EstatisticasResposta | null>(null);
   const [estatisticasTempo, setEstatisticasTempo] = useState<EstatisticasResposta | null>(null);
+  const [estatisticasTempoCondicao, setEstatisticasTempoCondicao] = useState<EstatisticasResposta | null>(null);
   const [pagina, setPagina] = useState<PaginaParticipantes | null>(null);
 
   const autenticado = token !== null;
@@ -51,6 +52,7 @@ export function usarAdministracao() {
     setResumo(null);
     setEstatisticasCondicao(null);
     setEstatisticasTempo(null);
+    setEstatisticasTempoCondicao(null);
     setPagina(null);
   }, []);
 
@@ -67,14 +69,16 @@ export function usarAdministracao() {
     setCarregando(true);
     setErro(null);
     try {
-      const [r, ec, et] = await Promise.all([
+      const [r, ec, et, etc] = await Promise.all([
         obterResumo(token),
         obterEstatisticas(token, 'condicao'),
         obterEstatisticas(token, 'tempo'),
+        obterEstatisticas(token, 'tempo_condicao'),
       ]);
       setResumo(r);
       setEstatisticasCondicao(ec);
       setEstatisticasTempo(et);
+      setEstatisticasTempoCondicao(etc);
     } catch (e) {
       setErro(tratarErroToken(e));
     } finally {
@@ -107,6 +111,7 @@ export function usarAdministracao() {
     resumo,
     estatisticasCondicao,
     estatisticasTempo,
+    estatisticasTempoCondicao,
     pagina,
     login,
     sair,

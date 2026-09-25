@@ -25,7 +25,7 @@ export async function obterResumo(token: string): Promise<ResumoAdministracao> {
 
 export async function obterEstatisticas(
   token: string,
-  agrupar_por: 'condicao' | 'tempo',
+  agrupar_por: 'condicao' | 'tempo' | 'tempo_condicao',
 ): Promise<EstatisticasResposta> {
   return requisicao<EstatisticasResposta>(
     `/administracao/estatisticas?agrupar_por=${agrupar_por}`,

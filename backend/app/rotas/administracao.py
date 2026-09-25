@@ -61,7 +61,7 @@ async def consultar_resumo(
 )
 async def consultar_estatisticas(
     sessao: Annotated[Session, Depends(obter_sessao)],
-    agrupar_por: Literal["condicao", "tempo"] = "condicao",
+    agrupar_por: Literal["condicao", "tempo", "tempo_condicao"] = "condicao",
 ) -> EstatisticasResposta:
     return EstatisticasServico(sessao).estatisticas(agrupar_por)
 
