@@ -409,6 +409,7 @@ export function Administracao() {
                         <div className="mt-4">
                           <TabelaResultados
                             tentativas={tentativasDoTempo}
+                            mostrarCabecalhosTempo={false}
                             onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
                           />
                         </div>
@@ -439,6 +440,7 @@ export function Administracao() {
                           <div className="mt-4">
                             <TabelaResultados
                               tentativas={tentativasDoTempo}
+                              mostrarCabecalhosTempo={false}
                               onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
                             />
                           </div>

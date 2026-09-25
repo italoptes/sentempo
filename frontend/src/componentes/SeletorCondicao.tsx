@@ -16,14 +16,6 @@ export function SeletorCondicao({ tempoSelecionado, combinacoes, onSelecionar }:
 
   return (
     <div>
-      <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
-        2. Escolha a condição
-        {semTempo && (
-          <span className="ml-2 text-xs font-normal normal-case text-texto-secundario/70">
-            (selecione um tempo primeiro)
-          </span>
-        )}
-      </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {CONDICOES.map((condicao) => {
           const combinacao = tempoSelecionado

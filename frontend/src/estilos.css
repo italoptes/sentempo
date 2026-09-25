@@ -60,3 +60,20 @@ body {
 .pagina-entrar {
   animation: entrar 0.25s ease-out;
 }
+
+.desafio-paginas::-webkit-scrollbar {
+  display: none;
+}
+
+.desafio-paginas {
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+
+.desafio-pagina {
+  flex: 0 0 100%;
+  min-width: 100%;
+  scroll-snap-align: start;
+}

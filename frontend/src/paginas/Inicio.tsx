@@ -1,6 +1,6 @@
 // paginas/Inicio.tsx — Menu principal do participante (rota /inicio)
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ParticipanteDetalhe, Combinacao } from '../tipos/participante';
 import type { ModoLivreStatus } from '../servicos/modo_livre';
@@ -20,6 +20,9 @@ interface Props {
 export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props) {
   const navigate = useNavigate();
   const [tempoSelecionado, setTempoSelecionado] = useState<number | null>(null);
+  const [paginaDesafio, setPaginaDesafio] = useState(0);
+  const [resultadosAbertos, setResultadosAbertos] = useState(true);
+  const paginasDesafioRef = useRef<HTMLDivElement>(null);
 
   const [tempoParaExcluir, setTempoParaExcluir] = useState<string | null>(null);
   const [tentativaParaExcluir, setTentativaParaExcluir] = useState<string | null>(null);
@@ -39,7 +42,18 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
   );
 
   const handleSelecionarTempo = useCallback((tempo: number) => {
-    setTempoSelecionado((prev) => (prev === tempo ? null : tempo));
+    setTempoSelecionado(tempo);
+    const container = paginasDesafioRef.current;
+    if (container) {
+      container.scrollTo({ left: container.scrollWidth - container.clientWidth, behavior: 'smooth' });
+    }
+  }, []);
+
+  const irParaPaginaDesafio = useCallback((pagina: number) => {
+    const container = paginasDesafioRef.current;
+    if (!container) return;
+    const ultimaPagina = container.scrollWidth - container.clientWidth;
+    container.scrollTo({ left: pagina === 0 ? 0 : ultimaPagina, behavior: 'smooth' });
   }, []);
 
   const concluidas = participante.progresso.concluidas;
@@ -79,15 +93,61 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
         {concluidas < 9 ? (
           <section aria-label="Escolha da combinação" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
             <h2 className="text-base font-semibold text-principal">Escolha seu desafio</h2>
-            <SeletorTempo
-              tempoSelecionado={tempoSelecionado}
-              onSelecionar={handleSelecionarTempo}
-            />
-            <SeletorCondicao
-              tempoSelecionado={tempoSelecionado}
-              combinacoes={participante.combinacoes as Combinacao[]}
-              onSelecionar={handleSelecionarCondicao}
-            />
+            <div
+              ref={paginasDesafioRef}
+              className="desafio-paginas flex min-w-0 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+              aria-label="Etapas de escolha do desafio"
+              onScroll={(event) => {
+                const container = event.currentTarget;
+                const ultimaPagina = container.scrollWidth - container.clientWidth;
+                setPaginaDesafio(container.scrollLeft >= ultimaPagina / 2 ? 1 : 0);
+              }}
+            >
+              <div className="desafio-pagina snap-start">
+                <SeletorTempo
+                  tempoSelecionado={tempoSelecionado}
+                  onSelecionar={handleSelecionarTempo}
+                />
+              </div>
+              <div className="desafio-pagina snap-start">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide">
+                    2. Escolha a condição
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => irParaPaginaDesafio(0)}
+                    className="text-xs font-medium text-destaque hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
+                  >
+                    Alterar tempo
+                  </button>
+                </div>
+                {tempoSelecionado === null && (
+                  <p className="mb-3 text-xs text-texto-secundario">
+                    Escolha um tempo para ver as condições disponíveis.
+                  </p>
+                )}
+                <SeletorCondicao
+                  tempoSelecionado={tempoSelecionado}
+                  combinacoes={participante.combinacoes as Combinacao[]}
+                  onSelecionar={handleSelecionarCondicao}
+                />
+              </div>
+            </div>
+            <div className="flex justify-center gap-2" aria-label="Página do desafio">
+              {[0, 1].map((pagina) => (
+                <button
+                  key={pagina}
+                  type="button"
+                  onClick={() => irParaPaginaDesafio(pagina)}
+                  aria-label={`Ir para ${pagina === 0 ? 'escolha do tempo' : 'escolha da condição'}`}
+                  aria-current={paginaDesafio === pagina ? 'step' : undefined}
+                  className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                    paginaDesafio === pagina ? 'bg-destaque' : 'bg-destaque-claro'
+                  }`}
+                />
+              ))}
+            </div>
           </section>
         ) : (
           <div className="bg-destaque-claro rounded-2xl p-6 text-center">
@@ -173,29 +233,41 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
           )}
         </section>
 
-        {/* Tabela de resultados */}
-        {participante.tentativas.length > 0 && (
+        {(participante.tentativas.length > 0 || (participante.tentativas_livres?.length ?? 0) > 0) && (
           <section aria-label="Resultados">
-            <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
-              Seus resultados
-            </h2>
-            <TabelaResultados
-              tentativas={participante.tentativas}
-              onExcluir={(id) => setTentativaParaExcluir(id)}
-            />
-          </section>
-        )}
-
-        {/* Tabela de resultados livres */}
-        {participante.tentativas_livres && participante.tentativas_livres.length > 0 && (
-          <section aria-label="Resultados do Modo Livre">
-            <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
-              Resultados do Modo Livre
-            </h2>
-            <TabelaResultados
-              tentativas={participante.tentativas_livres}
-              onExcluir={(id) => setTentativaParaExcluir(id)}
-            />
+            <button
+              type="button"
+              aria-expanded={resultadosAbertos}
+              aria-controls="lista-resultados"
+              onClick={() => setResultadosAbertos((abertos) => !abertos)}
+              className="flex w-full items-center justify-between border-b border-destaque-claro pb-3 text-left text-sm font-semibold uppercase tracking-wide text-texto-secundario"
+            >
+              <span>Seus resultados</span>
+              <span aria-hidden="true" className="text-lg leading-none">
+                {resultadosAbertos ? '−' : '+'}
+              </span>
+            </button>
+            {resultadosAbertos && (
+              <div id="lista-resultados" className="pt-4 space-y-6">
+                {participante.tentativas.length > 0 && (
+                  <TabelaResultados
+                    tentativas={participante.tentativas}
+                    onExcluir={(id) => setTentativaParaExcluir(id)}
+                  />
+                )}
+                {(participante.tentativas_livres?.length ?? 0) > 0 && (
+                  <section aria-label="Resultados do Modo Livre">
+                    <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">
+                      Resultados do Modo Livre
+                    </h3>
+                    <TabelaResultados
+                      tentativas={participante.tentativas_livres}
+                      onExcluir={(id) => setTentativaParaExcluir(id)}
+                    />
+                  </section>
+                )}
+              </div>
+            )}
           </section>
         )}
       </main>
