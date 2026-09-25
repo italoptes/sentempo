@@ -331,21 +331,45 @@ export function Administracao() {
             {/* Combinações */}
             <div>
               <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Combinações</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {detalhe.participante.combinacoes.map((c) => (
-                  <div
-                    key={`${c.tempo_alvo_ms}-${c.condicao}`}
-                    className={`rounded-xl px-3 py-2 text-xs border ${
-                      c.concluida
-                        ? 'bg-destaque-claro border-destaque text-principal'
-                        : 'bg-fundo border-destaque-claro text-texto-secundario'
-                    }`}
-                  >
-                    <p className="font-semibold">{rotularTempo(c.tempo_alvo_ms)}</p>
-                    <p>{rotularCondicao(c.condicao)}</p>
-                    <p className="mt-1">{c.concluida ? '✓ Concluída' : 'Pendente'}</p>
-                  </div>
-                ))}
+              <div className="space-y-4">
+                {[5000, 15000, 30000].map((tempo) => {
+                  const combsDoTempo = detalhe.participante.combinacoes.filter(c => c.tempo_alvo_ms === tempo);
+                  if (combsDoTempo.length === 0) return null;
+                  return (
+                    <details
+                      key={`comb-${tempo}`}
+                      className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
+                    >
+                      <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
+                        <span>
+                          {rotularTempo(tempo)}
+                          <span className="text-texto-secundario ml-2 font-normal">
+                            - {combsDoTempo.filter(c => c.concluida).length}/{combsDoTempo.length}
+                          </span>
+                        </span>
+                        <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
+                      </summary>
+                      <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+                          {combsDoTempo.map((c) => (
+                            <div
+                              key={`${c.tempo_alvo_ms}-${c.condicao}`}
+                              className={`rounded-xl px-3 py-2 text-xs border ${
+                                c.concluida
+                                  ? 'bg-destaque-claro border-destaque text-principal'
+                                  : 'bg-fundo border-destaque-claro text-texto-secundario'
+                              }`}
+                            >
+                              <p className="font-semibold">{rotularTempo(c.tempo_alvo_ms)}</p>
+                              <p>{rotularCondicao(c.condicao)}</p>
+                              <p className="mt-1">{c.concluida ? '✓ Concluída' : 'Pendente'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
             </div>
 
@@ -366,21 +390,64 @@ export function Administracao() {
             </div>
 
             {/* Tentativas */}
-            <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide">Resultados Oficiais</h3>
-            <TabelaResultados
-              tentativas={detalhe.participante.tentativas}
-              onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
-            />
+            <div>
+              <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Resultados Oficiais</h3>
+              <div className="space-y-4">
+                {[5000, 15000, 30000].map((tempo) => {
+                  const tentativasDoTempo = detalhe.participante.tentativas.filter(t => t.tempo_alvo_ms === tempo);
+                  if (tentativasDoTempo.length === 0) return null;
+                  return (
+                    <details
+                      key={`tentativas-${tempo}`}
+                      className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
+                    >
+                      <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
+                        {rotularTempo(tempo)}
+                        <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
+                      </summary>
+                      <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
+                        <div className="mt-4">
+                          <TabelaResultados
+                            tentativas={tentativasDoTempo}
+                            onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
+                          />
+                        </div>
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Tentativas Livres */}
             {detalhe.participante.tentativas_livres && detalhe.participante.tentativas_livres.length > 0 && (
-              <>
-                <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mt-6">Resultados do Modo Livre</h3>
-                <TabelaResultados
-                  tentativas={detalhe.participante.tentativas_livres}
-                  onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
-                />
-              </>
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Resultados do Modo Livre</h3>
+                <div className="space-y-4">
+                  {Array.from(new Set(detalhe.participante.tentativas_livres.map(t => t.tempo_alvo_ms))).sort((a, b) => a - b).map((tempo) => {
+                    const tentativasDoTempo = detalhe.participante.tentativas_livres.filter(t => t.tempo_alvo_ms === tempo);
+                    return (
+                      <details
+                        key={`livres-${tempo}`}
+                        className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
+                      >
+                        <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
+                          {rotularTempo(tempo)}
+                          <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
+                          <div className="mt-4">
+                            <TabelaResultados
+                              tentativas={tentativasDoTempo}
+                              onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
+                            />
+                          </div>
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </section>
         )}

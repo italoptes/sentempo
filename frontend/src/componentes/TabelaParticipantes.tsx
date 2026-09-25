@@ -75,19 +75,19 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               </div>
 
               <div className="flex justify-end gap-3 pt-2 border-t border-destaque-claro/50 mt-2">
+              <button
+                  type="button"
+                  onClick={() => onDetalhar(item.id)}
+                  className="text-destaque font-medium hover:underline text-sm"
+                >
+                  Ver detalhes
+                </button>
                 <button
                   type="button"
                   onClick={() => onExcluirConta(item.id)}
                   className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
                 >
                   Excluir
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDetalhar(item.id)}
-                  className="text-destaque font-medium hover:underline text-sm"
-                >
-                  Ver detalhes
                 </button>
               </div>
             </div>
