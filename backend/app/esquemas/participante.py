@@ -39,6 +39,7 @@ class ParticipanteAcessoResposta(BaseModel):
     nome: str
     codigo: str
     progresso: ProgressoResposta
+    novo_participante: bool = False
 
 
 class ParticipanteDetalheResposta(ParticipanteAcessoResposta):
@@ -56,4 +57,3 @@ class ParticipanteListaItem(BaseModel):
     situacao: str
 
     model_config = ConfigDict(from_attributes=True)
-

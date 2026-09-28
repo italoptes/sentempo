@@ -5,6 +5,7 @@
   --color-principal: #0F2D2E;
   --color-destaque: #00C2A8;
   --color-destaque-claro: #BDE8E0;
+  --color-borda-controle: #5F7775;
   --color-fundo: #F7F8F7;
   --color-texto-secundario: #6B7280;
   --color-branco: #FFFFFF;
@@ -46,8 +47,36 @@ body {
 
 /* Foco visível */
 :focus-visible {
-  outline: 2px solid #00C2A8;
-  outline-offset: 2px;
+  /* Indicador em duas cores: permanece perceptível em fundos claros e escuros. */
+  outline: 3px solid transparent !important;
+  outline-offset: 3px !important;
+  box-shadow:
+    0 0 0 3px #FFFFFF,
+    0 0 0 6px #00796B !important;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.link-pular-conteudo {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 0.75rem;
+  background: #FFFFFF;
+  color: #0F2D2E;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: transform 0.15s ease-out;
+}
+
+.link-pular-conteudo:focus-visible {
+  transform: translateY(0);
 }
 
 
@@ -57,6 +86,42 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes tutorial-entrar {
+  from { opacity: 0; transform: translateX(1rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .pagina-entrar {
   animation: entrar 0.25s ease-out;
+}
+
+.tutorial-etapa {
+  animation: tutorial-entrar 0.25s ease-out;
+}
+
+.desafio-paginas::-webkit-scrollbar {
+  display: none;
+}
+
+.desafio-paginas {
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+
+.desafio-pagina {
+  flex: 0 0 100%;
+  min-width: 100%;
+  scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="loading-ui-ring-spin"] {
+    animation-duration: 2s !important;
+  }
+
+  .tutorial-etapa {
+    animation: none;
+  }
 }

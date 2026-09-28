@@ -139,7 +139,7 @@ Carregar Poppins de maneira consistente em toda a aplicação. Para produção, 
 - As nove combinações possíveis são: 3 tempos × 3 condições.
 - Uma combinação já concluída não pode ser iniciada nem salva novamente para o mesmo participante.
 - Uma tentativa só é válida quando o estímulo, caso aplicável, iniciou e funcionou durante a rodada. Se o áudio falhar, for bloqueado pelo navegador, não iniciar ou apresentar erro de reprodução, a rodada é cancelada e não é salva.
-- Quando o participante clicar em iniciar, o frontend inicia a medição com `performance.now()`.
+- Quando o participante clicar em iniciar, o frontend mostra `Preparando...` e uma barra indeterminada. Após preparar o áudio e aguardar um intervalo aleatório de 900 a 1400 ms, exibe `Em andamento` e inicia a medição com `performance.now()`. A preparação não integra o resultado.
 - Quando ele clicar em “Finalizar”, o frontend calcula `resultado_ms = performance.now() - instante_inicio` e envia o valor em milissegundos. Não arredondar antes do envio.
 - O backend valida todos os valores e calcula novamente as métricas. O frontend pode mostrar essas métricas depois no menu, mas o banco considera a versão calculada pelo backend como fonte de verdade.
 - Não deve existir um limite mínimo ou máximo artificial para o clique de finalizar. O backend apenas rejeita durações inválidas, não finitas ou não positivas.
@@ -167,6 +167,7 @@ Uma combinação pode estar em um destes estados de interface:
 | Estado | Significado |
 | --- | --- |
 | `DISPONIVEL` | Ainda não há tentativa válida para a combinação |
+| `PREPARANDO` | Preparação local com barra indeterminada; sem medição nem estímulos |
 | `EM_ANDAMENTO` | Rodada aberta localmente; não persistir este estado no banco |
 | `CONCLUIDA` | Tentativa válida salva |
 | `INDISPONIVEL` | Combinação concluída; botão desabilitado |
@@ -212,15 +213,15 @@ Antes de iniciar, exibir:
 - botão `Iniciar rodada`;
 - botão `Voltar ao menu`.
 
-Para condições `RAPIDO` e `LENTO`, só habilitar a rodada após Tone.js estar pronto e o contexto de áudio ser iniciado a partir do gesto do botão. Se não puder iniciar, mostrar erro claro e não iniciar o cronômetro.
+Para condições `RAPIDO` e `LENTO`, só habilitar a rodada após Tone.js estar pronto e o contexto de áudio ser iniciado a partir do gesto do botão. Se não puder iniciar, mostrar erro claro e não iniciar o cronômetro. Durante `Preparando...`, não aceitar novos cliques de início nem disponibilizar Finalizar. Ao sair da página, cancelar a espera e liberar o áudio, inclusive se sua preparação terminar depois da saída.
 
 ### 5.4 Rodada ativa
 
-Após o clique em `Iniciar rodada`:
+Após a preparação e a espera variável:
 
-- iniciar `performance.now()` e marcar a tela como ativa;
+- remover a barra, exibir o texto estático `Em andamento` e iniciar `performance.now()` quando a tela ativa for renderizada;
 - esconder preparações e qualquer informação temporal;
-- mostrar apenas o estímulo visual quando aplicável e um botão grande `Finalizar`;
+- manter `Em andamento`, o estímulo visual quando aplicável e um botão grande `Finalizar`;
 - em `SEM_ESTIMULO`, não mostrar elemento que pulse ou marque ritmo; o botão deve permanecer estável;
 - impedir clique duplo em finalizar;
 - não oferecer voltar, reiniciar ou cancelar durante a rodada; fechar a página equivale a abandonar, sem salvar;
@@ -259,13 +260,13 @@ RAPIDO: inteiro aleatório entre 300 e 700 ms
 LENTO:  inteiro aleatório entre 900 e 1600 ms
 ```
 
-O primeiro pulso deve ocorrer imediatamente ou após um intervalo sorteado, mas a escolha deve ser única e documentada no código. Adotar **primeiro pulso imediato** para confirmar que o áudio está ativo antes da rodada; os pulsos seguintes usam os intervalos sorteados.
+O primeiro pulso deve ocorrer imediatamente ou após um intervalo sorteado, mas a escolha deve ser única e documentada no código. Adotar **primeiro pulso imediato ao entrar em `Em andamento`**, após registrar o início da medição; os pulsos seguintes usam os intervalos sorteados.
 
 Implementação sugerida:
 
 1. No gesto de `Iniciar rodada`, chamar `Tone.start()` e criar/preparar o sintetizador.
-2. Disparar o primeiro pulso audiovisual.
-3. Registrar o início com `performance.now()` imediatamente após a preparação bem-sucedida e antes do primeiro pulso.
+2. Mostrar `Preparando...` com uma barra indeterminada, sem números ou percentuais. Após o áudio ficar pronto, aguardar entre 900 e 1400 ms, sorteados a cada início, sem disparar estímulos.
+3. Renderizar `Em andamento`, registrar o início com `performance.now()` e disparar o primeiro pulso audiovisual.
 4. Agendar o próximo pulso com `setTimeout` usando o intervalo sorteado. Cada callback dispara som e adiciona/remova uma classe CSS de pulso no círculo.
 5. Guardar todos os identificadores de agendamento em uma referência e limpá-los ao finalizar, desmontar componente ou detectar erro.
 6. Se o disparo de áudio gerar exceção ou promessa rejeitada durante a rodada, parar a rodada, não chamar a API de salvamento e explicar que ela deverá ser iniciada novamente.

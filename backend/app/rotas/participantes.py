@@ -31,7 +31,7 @@ async def acessar_participante(
     if criado:
         resposta.status_code = status.HTTP_201_CREATED
     participante = servico.obter(participante.id) or participante
-    return servico.resposta_acesso(participante)
+    return servico.resposta_acesso(participante, novo_participante=criado)
 
 
 @roteador.get("/{participante_id}", response_model=ParticipanteDetalheResposta)

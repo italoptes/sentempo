@@ -18,31 +18,33 @@ function proximoIntervalo(condicao: Condicao): number {
 }
 
 export interface ControleEstimulo {
+  iniciar: () => void;
   /** Para e limpa todos os agendamentos e recursos de áudio */
   parar: () => void;
 }
 
 /**
- * Inicia o estímulo audiovisual para a condição especificada.
+ * Prepara o áudio sem disparar pulsos; iniciar() ativa o estímulo.
  *
  * @param condicao - 'RAPIDO' | 'LENTO'
  * @param aoDisparar - callback disparado a cada pulso (inclui o primeiro imediato)
  * @param aoErro - callback caso o áudio falhe durante a rodada
- * @returns controle com método parar()
+ * @returns controle com métodos iniciar() e parar()
  */
-export async function iniciarEstimulo(
+export async function prepararEstimulo(
   condicao: Condicao,
   aoDisparar: () => void,
   aoErro: (motivo: string) => void,
 ): Promise<ControleEstimulo> {
   if (condicao === 'SEM_ESTIMULO') {
-    return { parar: () => undefined };
+    return { iniciar: () => undefined, parar: () => undefined };
   }
 
   // Inicializa contexto de áudio a partir do gesto do usuário
   await Tone.start();
 
-  let ativo = true;
+  let ativo = false;
+  let encerrado = false;
   const agendamentos: ReturnType<typeof setTimeout>[] = [];
 
   // Sintetizador simples: oscilador com envelope curto, ajustado para ser mais audível e nítido
@@ -72,14 +74,19 @@ export async function iniciarEstimulo(
   }
 
   function parar() {
+    if (encerrado) return;
+    encerrado = true;
     ativo = false;
     agendamentos.forEach(clearTimeout);
     agendamentos.length = 0;
     try { sintetizador.dispose(); } catch { /* ignora */ }
   }
 
-  // Primeiro pulso imediato (confirma que áudio está ativo antes da rodada)
-  disparar();
+  function iniciar() {
+    if (ativo || encerrado) return;
+    ativo = true;
+    disparar();
+  }
 
-  return { parar };
+  return { iniciar, parar };
 }

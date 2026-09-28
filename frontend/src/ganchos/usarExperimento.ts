@@ -1,14 +1,15 @@
 // ganchos/usarExperimento.ts — Gerencia o estado de uma rodada do experimento
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { Condicao } from '../utilitarios/estimulo';
-import { iniciarEstimulo } from '../utilitarios/estimulo';
+import { prepararEstimulo } from '../utilitarios/estimulo';
 import type { ControleEstimulo } from '../utilitarios/estimulo';
 import { salvarTentativa } from '../servicos/tentativas';
 import { ErroAPI } from '../servicos/api';
 
 export type EstadoRodada =
   | 'preparacao'
+  | 'preparando'
   | 'ativa'
   | 'finalizando'
   | 'erro-audio'
@@ -23,10 +24,14 @@ export function usarExperimento(
   const [estado, setEstado] = useState<EstadoRodada>('preparacao');
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [pulseCount, setPulseCount] = useState(0);
+  const [duracaoEspera, setDuracaoEspera] = useState(0);
 
   const inicioRef = useRef<number | null>(null);
   const controleRef = useRef<ControleEstimulo | null>(null);
   const finalizadoRef = useRef(false);
+  const iniciandoRef = useRef(false);
+  const operacaoRef = useRef(0);
+  const esperaRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Callback disparado a cada pulso do estímulo (som + animação via Motion) */
   const aoDisparar = useCallback(() => {
@@ -34,27 +39,42 @@ export function usarExperimento(
   }, []);
 
   const iniciarRodada = useCallback(async (condicao: Condicao) => {
-    setEstado('preparacao');
+    if (iniciandoRef.current) return;
+    iniciandoRef.current = true;
+    const operacao = ++operacaoRef.current;
+    setEstado('preparando');
     setMensagemErro(null);
     finalizadoRef.current = false;
 
+    // Gera duração aleatória entre 900ms e 1400ms para a barra de progresso
+    const tempoEspera = 900 + Math.floor(Math.random() * 501);
+    setDuracaoEspera(tempoEspera);
+
     try {
-      // Inicia estímulo (para SEM_ESTIMULO retorna imediatamente)
-      const controle = await iniciarEstimulo(
+      const controle = await prepararEstimulo(
         condicao,
         aoDisparar,
         (motivo) => {
-          controle.parar();
+          if (operacao !== operacaoRef.current) return;
+          inicioRef.current = null;
+          controleRef.current?.parar();
+          controleRef.current = null;
           setEstado('erro-audio');
           setMensagemErro(`Erro de áudio: ${motivo}. A rodada foi cancelada.`);
         },
       );
+      if (operacao !== operacaoRef.current) {
+        controle.parar();
+        return;
+      }
       controleRef.current = controle;
 
-      // Registra início APÓS preparação bem-sucedida
-      inicioRef.current = performance.now();
-      setEstado('ativa');
+      esperaRef.current = setTimeout(() => {
+        esperaRef.current = null;
+        if (operacao === operacaoRef.current) setEstado('ativa');
+      }, tempoEspera);
     } catch (e) {
+      if (operacao !== operacaoRef.current) return;
       setEstado('erro-audio');
       setMensagemErro(
         `Não foi possível iniciar o áudio: ${e instanceof Error ? e.message : 'erro desconhecido'}. ` +
@@ -62,6 +82,12 @@ export function usarExperimento(
       );
     }
   }, [aoDisparar]);
+
+  useLayoutEffect(() => {
+    if (estado !== 'ativa' || inicioRef.current !== null) return;
+    inicioRef.current = performance.now();
+    controleRef.current?.iniciar();
+  }, [estado]);
 
   const finalizarRodada = useCallback(
     async (tempoAlvoMs: number, condicao: Condicao) => {
@@ -107,6 +133,10 @@ export function usarExperimento(
   );
 
   const limpar = useCallback(() => {
+    operacaoRef.current += 1;
+    if (esperaRef.current !== null) clearTimeout(esperaRef.current);
+    esperaRef.current = null;
+    iniciandoRef.current = false;
     controleRef.current?.parar();
     controleRef.current = null;
     inicioRef.current = null;
@@ -116,5 +146,5 @@ export function usarExperimento(
     setPulseCount(0);
   }, []);
 
-  return { estado, mensagemErro, pulseCount, iniciarRodada, finalizarRodada, limpar };
+  return { estado, mensagemErro, pulseCount, duracaoEspera, iniciarRodada, finalizarRodada, limpar };
 }

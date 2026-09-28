@@ -6,6 +6,7 @@ import type { ModoLivreStatus } from '../servicos/modo_livre';
 import { consultarParticipante } from '../servicos/participantes';
 
 const CHAVE_ID = 'sentempo_participante_id';
+const CHAVE_TUTORIAL = 'sentempo_tutorial_pendente';
 
 export function usarParticipante() {
   const [participanteId, setParticipanteId] = useState<string | null>(
@@ -14,19 +15,36 @@ export function usarParticipante() {
   const [detalhe, setDetalhe] = useState<ParticipanteDetalhe | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [tutorialAberto, setTutorialAberto] = useState(() => {
+    const tutorialPendente = sessionStorage.getItem(CHAVE_TUTORIAL);
+    return tutorialPendente !== null && tutorialPendente === sessionStorage.getItem(CHAVE_ID);
+  });
 
   const [modoLivre, setModoLivre] = useState<ModoLivreStatus | null>(null);
 
-  const definirParticipante = useCallback((id: string) => {
+  const definirParticipante = useCallback((id: string, novoParticipante = false) => {
     sessionStorage.setItem(CHAVE_ID, id);
+    if (novoParticipante) {
+      sessionStorage.setItem(CHAVE_TUTORIAL, id);
+    } else {
+      sessionStorage.removeItem(CHAVE_TUTORIAL);
+    }
     setParticipanteId(id);
+    setTutorialAberto(novoParticipante);
+  }, []);
+
+  const fecharTutorial = useCallback(() => {
+    sessionStorage.removeItem(CHAVE_TUTORIAL);
+    setTutorialAberto(false);
   }, []);
 
   const sair = useCallback(() => {
     sessionStorage.removeItem(CHAVE_ID);
+    sessionStorage.removeItem(CHAVE_TUTORIAL);
     setParticipanteId(null);
     setDetalhe(null);
     setModoLivre(null);
+    setTutorialAberto(false);
   }, []);
 
   const recarregar = useCallback(async () => {
@@ -56,5 +74,16 @@ export function usarParticipante() {
     }
   }, [participanteId, recarregar]);
 
-  return { participanteId, detalhe, carregando, erro, modoLivre, definirParticipante, sair, recarregar };
+  return {
+    participanteId,
+    detalhe,
+    carregando,
+    erro,
+    modoLivre,
+    tutorialAberto,
+    definirParticipante,
+    fecharTutorial,
+    sair,
+    recarregar,
+  };
 }

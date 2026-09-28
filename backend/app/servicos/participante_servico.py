@@ -57,13 +57,17 @@ class ParticipanteServico:
         return False
 
     @staticmethod
-    def resposta_acesso(participante: Participante) -> ParticipanteAcessoResposta:
+    def resposta_acesso(
+        participante: Participante,
+        novo_participante: bool = False,
+    ) -> ParticipanteAcessoResposta:
         quantidade = sum(1 for t in participante.tentativas if t.tipo_tentativa.name == "OFICIAL")
         return ParticipanteAcessoResposta(
             id=participante.id,
             nome=participante.nome,
             codigo=participante.codigo,
             progresso=ProgressoResposta(concluidas=quantidade),
+            novo_participante=novo_participante,
         )
 
     @staticmethod
@@ -97,4 +101,3 @@ class ParticipanteServico:
             tentativas_livres=[TentativaResposta.model_validate(item) for item in sorted(tentativas_livres, key=lambda i: i.criado_em, reverse=True)],
             combinacoes=combinacoes,
         )
-

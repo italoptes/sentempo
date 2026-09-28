@@ -7,6 +7,7 @@ import { CirculoEstimulo } from '../componentes/CirculoEstimulo';
 import { BotaoFinalizar } from '../componentes/BotaoFinalizar';
 import { rotularTempo, rotularCondicao } from '../utilitarios/formatacao';
 import type { Condicao } from '../utilitarios/estimulo';
+import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 
 interface Props {
   participanteId: string;
@@ -20,7 +21,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   const tempoAlvoMs = Number(tempoParam);
   const condicao = condicaoParam as Condicao;
 
-  const { estado, mensagemErro, pulseCount, iniciarRodada, finalizarRodada, limpar } = usarExperimento(participanteId, 'PERSONALIZADA', tempoId);
+  const { estado, mensagemErro, pulseCount, duracaoEspera, iniciarRodada, finalizarRodada, limpar } = usarExperimento(participanteId, 'PERSONALIZADA', tempoId);
 
   // Limpa ao desmontar (parar áudio e agendamentos)
   useEffect(() => {
@@ -49,10 +50,21 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
 
   const comEstimulo = condicao === 'RAPIDO' || condicao === 'LENTO';
 
+  if (estado === 'preparando') {
+    return (
+      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+        <IndicadorCarregamento mensagem="Preparando..." temaEscuro variante="barra" duracaoMs={duracaoEspera} />
+      </div>
+    );
+  }
+
   // === TELA ATIVA — sem nenhuma informação temporal ===
   if (estado === 'ativa') {
     return (
-      <div className="min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+      <div id="conteudo-principal" tabIndex={-1} className="relative min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+        <p role="status" aria-live="polite" className="absolute top-12 text-destaque-claro text-base font-medium">
+          Em andamento
+        </p>
         {/* Estímulo visual (somente para RAPIDO e LENTO) */}
         <CirculoEstimulo pulseCount={pulseCount} visivel={comEstimulo} />
 
@@ -65,8 +77,8 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   // === FINALIZANDO ===
   if (estado === 'finalizando') {
     return (
-      <div className="min-h-screen bg-principal flex items-center justify-center">
-        <p className="text-destaque-claro text-lg font-medium animate-pulse">Salvando...</p>
+      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-principal flex items-center justify-center">
+        <IndicadorCarregamento mensagem="Salvando resultado..." temaEscuro />
       </div>
     );
   }
@@ -74,7 +86,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   // === ERRO DE ÁUDIO ===
   if (estado === 'erro-audio') {
     return (
-      <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
         <div className="bg-branco rounded-2xl border border-red-200 p-8 max-w-md w-full text-center space-y-4">
           <div className="text-4xl">🔇</div>
           <h1 className="text-lg font-semibold text-principal">Falha no áudio</h1>
@@ -94,7 +106,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   // === ERRO DE REDE ===
   if (estado === 'erro-rede') {
     return (
-      <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
         <div className="bg-branco rounded-2xl border border-orange-200 p-8 max-w-md w-full text-center space-y-4">
           <div className="text-4xl">⚠️</div>
           <h1 className="text-lg font-semibold text-principal">Resultado não confirmado</h1>
@@ -121,7 +133,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-lg mx-auto px-4 py-10 space-y-8 w-full">
+      <main id="conteudo-principal" tabIndex={-1} className="flex-1 max-w-lg mx-auto px-4 py-10 space-y-8 w-full">
         <div className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-4">
           {/* Informações da combinação */}
           <div className="flex gap-3 flex-wrap">

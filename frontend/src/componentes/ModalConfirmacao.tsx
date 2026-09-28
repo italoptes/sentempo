@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 interface Props {
   aberto: boolean;
@@ -22,6 +22,9 @@ export function ModalConfirmacao({
   onCancelar,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const elementoOrigemRef = useRef<HTMLElement | null>(null);
+  const tituloId = useId();
+  const mensagemId = useId();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -29,11 +32,18 @@ export function ModalConfirmacao({
 
     if (aberto) {
       if (!dialog.open) {
+        elementoOrigemRef.current = document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
         dialog.showModal();
+        window.requestAnimationFrame(() => {
+          dialog.querySelector<HTMLElement>('[data-foco-inicial]')?.focus();
+        });
       }
     } else {
       if (dialog.open) {
         dialog.close();
+        elementoOrigemRef.current?.focus();
       }
     }
   }, [aberto]);
@@ -52,18 +62,19 @@ export function ModalConfirmacao({
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [onCancelar]);
 
-  if (!aberto) return null;
-
   return (
     <dialog
       ref={dialogRef}
+      aria-labelledby={tituloId}
+      aria-describedby={mensagemId}
       className="bg-branco p-6 rounded-2xl shadow-xl border border-destaque-claro backdrop:bg-principal/60 backdrop:backdrop-blur-sm fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm m-0"
     >
-      <h2 className="text-lg font-semibold text-principal mb-2">{titulo}</h2>
-      <div className="text-sm text-texto-secundario mb-6">{mensagem}</div>
+      <h2 id={tituloId} className="text-lg font-semibold text-principal mb-2">{titulo}</h2>
+      <div id={mensagemId} className="text-sm text-texto-secundario mb-6">{mensagem}</div>
       <div className="flex justify-end gap-3">
         <button
           type="button"
+          data-foco-inicial
           onClick={onCancelar}
           className="px-4 py-2 text-sm font-medium text-texto-secundario hover:text-principal transition-colors focus-visible:outline-2 focus-visible:outline-destaque rounded-xl"
         >

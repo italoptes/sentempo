@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { acessarParticipante } from '../servicos/participantes';
 import { validarNome, validarCodigo } from '../utilitarios/validacao';
 import { ErroAPI } from '../servicos/api';
+import { Ring } from '../componentes/loading-ui/Ring';
 
 interface Props {
-  onParticipanteDefinido: (id: string) => void;
+  onParticipanteDefinido: (id: string, novoParticipante: boolean) => void;
 }
 
 export function Entrada({ onParticipanteDefinido }: Props) {
@@ -32,7 +33,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
     setCarregando(true);
     try {
       const participante = await acessarParticipante(nome.trim(), codigo);
-      onParticipanteDefinido(participante.id);
+      onParticipanteDefinido(participante.id, participante.novo_participante);
       navigate('/inicio');
     } catch (e) {
       if (e instanceof ErroAPI && e.status === 422) {
@@ -46,7 +47,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+    <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center">
@@ -82,7 +83,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
                 aria-invalid={!!erroNome}
                 className={`w-full px-4 py-3 rounded-xl border bg-branco text-principal text-sm
                   focus:outline-none focus:ring-2 transition-colors
-                  ${erroNome ? 'border-red-400 focus:ring-red-200' : 'border-destaque-claro focus:border-destaque focus:ring-destaque/20'}`}
+                  ${erroNome ? 'border-red-600 focus:ring-red-200' : 'border-borda-controle focus:border-principal focus:ring-destaque/20'}`}
               />
               {erroNome && (
                 <p id="erro-nome" role="alert" className="text-red-600 text-xs mt-1">{erroNome}</p>
@@ -107,7 +108,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
                 aria-invalid={!!erroCodigo}
                 className={`w-full px-4 py-3 rounded-xl border bg-branco text-principal text-sm font-mono tracking-widest
                   focus:outline-none focus:ring-2 transition-colors
-                  ${erroCodigo ? 'border-red-400 focus:ring-red-200' : 'border-destaque-claro focus:border-destaque focus:ring-destaque/20'}`}
+                  ${erroCodigo ? 'border-red-600 focus:ring-red-200' : 'border-borda-controle focus:border-principal focus:ring-destaque/20'}`}
               />
               {erroCodigo && (
                 <p id="erro-codigo" role="alert" className="text-red-600 text-xs mt-1">{erroCodigo}</p>
@@ -126,7 +127,12 @@ export function Entrada({ onParticipanteDefinido }: Props) {
                 hover:bg-[#00a890] active:scale-95 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-destaque
                 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
             >
-              {carregando ? 'Entrando...' : 'Entrar'}
+              {carregando ? (
+                <span role="status" aria-live="polite" className="inline-flex items-center justify-center gap-2">
+                  <Ring className="size-4" />
+                  Entrando...
+                </span>
+              ) : 'Entrar'}
             </button>
           </form>
         </div>

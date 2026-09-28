@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Interfaces estendidas para suporte ao BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -15,6 +15,8 @@ export function PWAModal() {
   const [mostrarPromptInstalacao, setMostrarPromptInstalacao] = useState(false);
   const [animando, setAnimando] = useState(false);
   const [instrucoesManual, setInstrucoesManual] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const focoAnteriorRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     // Verifica se já está instalado
@@ -50,6 +52,41 @@ export function PWAModal() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (!mostrarPromptInstalacao) {
+      focoAnteriorRef.current?.focus();
+      focoAnteriorRef.current = null;
+      return;
+    }
+
+    focoAnteriorRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const modal = modalRef.current;
+    modal?.querySelector<HTMLElement>('button')?.focus();
+
+    const manterFoco = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !modal) return;
+      const focaveis = Array.from(
+        modal.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+      ).filter((elemento) => !elemento.hasAttribute('disabled'));
+      if (focaveis.length === 0) return;
+
+      const primeiro = focaveis[0];
+      const ultimo = focaveis[focaveis.length - 1];
+      if (event.shiftKey && document.activeElement === primeiro) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primeiro.focus();
+      }
+    };
+
+    document.addEventListener('keydown', manterFoco);
+    return () => document.removeEventListener('keydown', manterFoco);
+  }, [mostrarPromptInstalacao]);
 
   const handleInstalarPWA = async () => {
     if (deferredPrompt) {
@@ -89,6 +126,11 @@ export function PWAModal() {
       >
         {/* Container Principal (Card) */}
         <div 
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-instalacao-pwa"
+          aria-describedby="descricao-instalacao-pwa"
           className={`w-[90%] max-w-sm bg-white rounded-t-3xl shadow-2xl overflow-hidden transition-transform duration-300 ease-out mb-0 sm:mb-4 sm:rounded-b-3xl ${animando ? 'translate-y-0 sm:translate-y-0' : 'translate-y-full sm:translate-y-[150%]'}`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -104,8 +146,8 @@ export function PWAModal() {
               </svg>
             </div>
             
-            <h2 className="text-white text-xl font-bold">Instale o Sentempo</h2>
-            <p className="text-white/80 text-sm mt-1">Acesso rápido na sua tela inicial</p>
+            <h2 id="titulo-instalacao-pwa" className="text-white text-xl font-bold">Instale o Sentempo</h2>
+            <p id="descricao-instalacao-pwa" className="text-white/80 text-sm mt-1">Acesso rápido na sua tela inicial</p>
           </div>
 
           {/* Conteúdo Central */}

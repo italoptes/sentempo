@@ -8,6 +8,9 @@ import { Experimento } from './paginas/Experimento';
 import { ExperimentoLivre } from './paginas/ExperimentoLivre';
 import { Administracao } from './paginas/Administracao';
 import { PWAModal } from './componentes/PWAModal';
+import { TituloPagina } from './componentes/TituloPagina';
+import { IndicadorCarregamento } from './componentes/IndicadorCarregamento';
+import { GerenciadorFocoRota } from './componentes/GerenciadorFocoRota';
 
 export function Aplicacao() {
   const {
@@ -15,13 +18,20 @@ export function Aplicacao() {
     detalhe,
     carregando,
     modoLivre,
+    tutorialAberto,
     definirParticipante,
+    fecharTutorial,
     sair,
     recarregar,
   } = usarParticipante();
 
   return (
     <>
+      <TituloPagina />
+      <GerenciadorFocoRota />
+      <a href="#conteudo-principal" className="link-pular-conteudo">
+        Ir para o conteúdo principal
+      </a>
       <Routes>
         {/* Entrada */}
         <Route
@@ -42,13 +52,15 @@ export function Aplicacao() {
             !participanteId ? (
               <Navigate to="/" replace />
             ) : carregando && !detalhe ? (
-              <div className="min-h-screen bg-fundo flex items-center justify-center">
-                <p className="text-texto-secundario animate-pulse">Carregando perfil...</p>
+              <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex items-center justify-center">
+                <IndicadorCarregamento mensagem="Carregando perfil..." />
               </div>
             ) : detalhe ? (
               <Inicio
                 participante={detalhe}
                 modoLivre={modoLivre}
+                tutorialAberto={tutorialAberto}
+                onFecharTutorial={fecharTutorial}
                 onSair={sair}
                 onRecarregar={recarregar}
               />

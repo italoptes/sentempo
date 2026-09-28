@@ -1,6 +1,6 @@
 // paginas/Administracao.tsx — Dashboard administrativo (rota /administracao)
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usarAdministracao } from '../ganchos/usarAdministracao';
 import { ResumoEstatisticas, TabelaEstatisticas } from '../componentes/ResumoEstatisticas';
 import { TabelaParticipantes } from '../componentes/TabelaParticipantes';
@@ -9,6 +9,8 @@ import type { ParticipanteAdministracao } from '../tipos/administracao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { rotularCondicao, rotularTempo, formatarErro, formatarErroAbsoluto } from '../utilitarios/formatacao';
+import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
+import { Ring } from '../componentes/loading-ui/Ring';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 function TelaLogin({
@@ -29,7 +31,7 @@ function TelaLogin({
   }
 
   return (
-    <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+    <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <img src="/images/logo_principal.png" alt="Sentempo" className="h-14 mx-auto object-contain mb-4" />
@@ -47,8 +49,8 @@ function TelaLogin({
                 autoComplete="username"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-destaque-claro bg-branco text-principal text-sm
-                  focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque"
+                className="w-full px-4 py-3 rounded-xl border border-borda-controle bg-branco text-principal text-sm
+                  focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque"
               />
             </div>
             <div>
@@ -59,8 +61,8 @@ function TelaLogin({
                 autoComplete="current-password"
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-destaque-claro bg-branco text-principal text-sm
-                  focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque"
+                className="w-full px-4 py-3 rounded-xl border border-borda-controle bg-branco text-principal text-sm
+                  focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque"
               />
             </div>
             {erro && (
@@ -74,7 +76,12 @@ function TelaLogin({
                 hover:bg-[#0a2021] transition-colors focus-visible:outline-2 focus-visible:outline-destaque
                 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {carregando ? 'Autenticando...' : 'Entrar'}
+              {carregando ? (
+                <span role="status" aria-live="polite" className="inline-flex items-center justify-center gap-2">
+                  <Ring className="size-4" />
+                  Autenticando...
+                </span>
+              ) : 'Entrar'}
             </button>
           </form>
         </div>
@@ -107,6 +114,7 @@ export function Administracao() {
   const [modalZerar, setModalZerar] = useState(false);
   const [modalExcluirConta, setModalExcluirConta] = useState<string | null>(null);
   const [tentativaParaExcluir, setTentativaParaExcluir] = useState<{ participanteId: string, tentativaId: string } | null>(null);
+  const painelDetalheRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (autenticado) {
@@ -118,7 +126,8 @@ export function Administracao() {
   useEffect(() => {
     if (detalhe) {
       setTimeout(() => {
-        document.getElementById('painel-detalhe')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        painelDetalheRef.current?.focus({ preventScroll: true });
+        painelDetalheRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 50);
     }
   }, [detalhe]);
@@ -179,7 +188,7 @@ export function Administracao() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-10">
+      <main id="conteudo-principal" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 space-y-10">
         {/* Erro geral */}
         {erro && !carregando && (
           <p role="alert" className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{erro}</p>
@@ -243,7 +252,7 @@ export function Administracao() {
             )}
           </>
         ) : carregando ? (
-          <p className="text-texto-secundario animate-pulse">Carregando dados...</p>
+          <IndicadorCarregamento mensagem="Carregando dados administrativos..." />
         ) : null}
 
         {/* Exportação CSV */}
@@ -293,7 +302,13 @@ export function Administracao() {
 
         {/* Painel de detalhe do participante */}
         {detalhe && (
-          <section id="painel-detalhe" aria-label="Detalhe do participante" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
+          <section
+            ref={painelDetalheRef}
+            id="painel-detalhe"
+            tabIndex={-1}
+            aria-label="Detalhe do participante"
+            className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6"
+          >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-principal">{detalhe.participante.nome}</h2>
@@ -409,6 +424,7 @@ export function Administracao() {
                         <div className="mt-4">
                           <TabelaResultados
                             tentativas={tentativasDoTempo}
+                            mostrarCabecalhosTempo={false}
                             onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
                           />
                         </div>
@@ -439,6 +455,7 @@ export function Administracao() {
                           <div className="mt-4">
                             <TabelaResultados
                               tentativas={tentativasDoTempo}
+                              mostrarCabecalhosTempo={false}
                               onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
                             />
                           </div>

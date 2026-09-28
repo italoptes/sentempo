@@ -30,8 +30,8 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por nome..."
-          className="flex-1 px-4 py-2 rounded-xl border border-destaque-claro bg-branco text-principal
-            focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque text-sm"
+          className="flex-1 px-4 py-2 rounded-xl border border-borda-controle bg-branco text-principal
+            focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque text-sm"
           aria-label="Buscar participante por nome"
         />
         <button
@@ -77,15 +77,17 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               <div className="flex justify-end gap-3 pt-2 border-t border-destaque-claro/50 mt-2">
               <button
                   type="button"
+                  aria-label={`Ver detalhes de ${item.nome}`}
                   onClick={() => onDetalhar(item.id)}
-                  className="text-destaque font-medium hover:underline text-sm"
+                  className="inline-flex min-h-11 items-center justify-center px-2 text-destaque font-medium hover:underline text-sm"
                 >
                   Ver detalhes
                 </button>
                 <button
                   type="button"
+                  aria-label={`Excluir participante ${item.nome}`}
                   onClick={() => onExcluirConta(item.id)}
-                  className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
+                  className="inline-flex min-h-11 items-center justify-center px-2 text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
                 >
                   Excluir
                 </button>
@@ -131,15 +133,17 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                   <td className="px-4 py-3 text-center flex justify-center gap-2 items-center">
                     <button
                       type="button"
+                      aria-label={`Ver detalhes de ${item.nome}`}
                       onClick={() => onDetalhar(item.id)}
-                      className="text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
                       Ver
                     </button>
                     <button
                       type="button"
+                      aria-label={`Excluir participante ${item.nome}`}
                       onClick={() => onExcluirConta(item.id)}
-                      className="text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
                         focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
                       Excluir
@@ -163,7 +167,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               type="button"
               disabled={pagina.pagina <= 1 || carregando}
               onClick={() => onPaginar(pagina.pagina - 1)}
-              className="px-3 py-1 rounded-lg border border-destaque-claro disabled:opacity-40
+              className="px-3 py-1 rounded-lg border border-borda-controle disabled:opacity-40
                 hover:bg-destaque-claro transition-colors focus-visible:outline-2 focus-visible:outline-destaque"
             >
               ← Anterior
@@ -172,7 +176,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               type="button"
               disabled={pagina.pagina >= pagina.total_paginas || carregando}
               onClick={() => onPaginar(pagina.pagina + 1)}
-              className="px-3 py-1 rounded-lg border border-destaque-claro disabled:opacity-40
+              className="px-3 py-1 rounded-lg border border-borda-controle disabled:opacity-40
                 hover:bg-destaque-claro transition-colors focus-visible:outline-2 focus-visible:outline-destaque"
             >
               Próxima →
