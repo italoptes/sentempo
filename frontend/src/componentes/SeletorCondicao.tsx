@@ -41,7 +41,7 @@ export function SeletorCondicao({ tempoSelecionado, combinacoes, onSelecionar }:
                   ? 'bg-destaque-claro border-destaque-claro text-texto-secundario cursor-default'
                   : semTempo
                   ? 'bg-fundo border-destaque-claro/50 text-texto-secundario/50 cursor-not-allowed'
-                  : 'bg-branco border-destaque-claro text-principal hover:border-destaque hover:bg-destaque-claro/30 cursor-pointer'
+                  : 'bg-branco border-borda-controle text-principal hover:border-principal hover:bg-destaque-claro/30 cursor-pointer'
                 }
               `}
             >

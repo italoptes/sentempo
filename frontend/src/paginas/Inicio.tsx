@@ -148,7 +148,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                   <span
                     aria-hidden="true"
                     className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                      paginaDesafio === pagina ? 'bg-principal' : 'bg-destaque-claro'
+                      paginaDesafio === pagina ? 'bg-principal' : 'bg-borda-controle'
                     }`}
                   />
                 </button>
@@ -180,7 +180,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                 <input
                   type="number"
                   placeholder="Tempo em segundos..."
-                  className="flex-1 px-4 py-2 rounded-xl border border-destaque-claro bg-branco text-principal text-sm focus:outline-none focus:border-destaque"
+                  className="flex-1 px-4 py-2 rounded-xl border border-borda-controle bg-branco text-principal text-sm focus:outline-none focus:border-principal"
                   id="input-novo-tempo"
                 />
                 <button
@@ -329,19 +329,19 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
           <div className="flex flex-col gap-3 mt-4">
             <button
               onClick={() => navigate(`/experimento-livre/${tempoParaJogar!.id}/${tempoParaJogar!.ms}/SEM_ESTIMULO`)}
-              className="py-3 px-4 bg-fundo border border-destaque-claro rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
+              className="py-3 px-4 bg-fundo border border-borda-controle rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
             >
               Sem Estímulo
             </button>
             <button
               onClick={() => navigate(`/experimento-livre/${tempoParaJogar!.id}/${tempoParaJogar!.ms}/RAPIDO`)}
-              className="py-3 px-4 bg-fundo border border-destaque-claro rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
+              className="py-3 px-4 bg-fundo border border-borda-controle rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
             >
               Estímulo Rápido
             </button>
             <button
               onClick={() => navigate(`/experimento-livre/${tempoParaJogar!.id}/${tempoParaJogar!.ms}/LENTO`)}
-              className="py-3 px-4 bg-fundo border border-destaque-claro rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
+              className="py-3 px-4 bg-fundo border border-borda-controle rounded-xl hover:bg-destaque-claro text-principal font-medium transition-colors text-left"
             >
               Estímulo Lento
             </button>

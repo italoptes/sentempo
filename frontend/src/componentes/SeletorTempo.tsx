@@ -30,7 +30,7 @@ export function SeletorTempo({ tempoSelecionado, onSelecionar }: Props) {
                 focus-visible:outline-2 focus-visible:outline-destaque touch-manipulation
                 ${selecionado
                   ? 'bg-principal border-principal text-branco shadow-md'
-                  : 'bg-branco border-destaque-claro text-principal hover:border-destaque hover:bg-destaque-claro/30'
+                  : 'bg-branco border-borda-controle text-principal hover:border-principal hover:bg-destaque-claro/30'
                 }
               `}
             >

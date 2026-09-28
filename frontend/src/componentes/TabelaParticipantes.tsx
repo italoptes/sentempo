@@ -30,8 +30,8 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por nome..."
-          className="flex-1 px-4 py-2 rounded-xl border border-destaque-claro bg-branco text-principal
-            focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque text-sm"
+          className="flex-1 px-4 py-2 rounded-xl border border-borda-controle bg-branco text-principal
+            focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque text-sm"
           aria-label="Buscar participante por nome"
         />
         <button
@@ -163,7 +163,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               type="button"
               disabled={pagina.pagina <= 1 || carregando}
               onClick={() => onPaginar(pagina.pagina - 1)}
-              className="px-3 py-1 rounded-lg border border-destaque-claro disabled:opacity-40
+              className="px-3 py-1 rounded-lg border border-borda-controle disabled:opacity-40
                 hover:bg-destaque-claro transition-colors focus-visible:outline-2 focus-visible:outline-destaque"
             >
               ← Anterior
@@ -172,7 +172,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               type="button"
               disabled={pagina.pagina >= pagina.total_paginas || carregando}
               onClick={() => onPaginar(pagina.pagina + 1)}
-              className="px-3 py-1 rounded-lg border border-destaque-claro disabled:opacity-40
+              className="px-3 py-1 rounded-lg border border-borda-controle disabled:opacity-40
                 hover:bg-destaque-claro transition-colors focus-visible:outline-2 focus-visible:outline-destaque"
             >
               Próxima →

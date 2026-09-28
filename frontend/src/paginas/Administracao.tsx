@@ -49,8 +49,8 @@ function TelaLogin({
                 autoComplete="username"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-destaque-claro bg-branco text-principal text-sm
-                  focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque"
+                className="w-full px-4 py-3 rounded-xl border border-borda-controle bg-branco text-principal text-sm
+                  focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque"
               />
             </div>
             <div>
@@ -61,8 +61,8 @@ function TelaLogin({
                 autoComplete="current-password"
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-destaque-claro bg-branco text-principal text-sm
-                  focus:outline-none focus:border-destaque focus:ring-1 focus:ring-destaque"
+                className="w-full px-4 py-3 rounded-xl border border-borda-controle bg-branco text-principal text-sm
+                  focus:outline-none focus:border-principal focus:ring-1 focus:ring-destaque"
               />
             </div>
             {erro && (

@@ -81,3 +81,19 @@ Além de enxergar que uma operação está em andamento, pessoas que utilizam le
 ### Como demonstrar
 
 Simular uma conexão lenta nas ferramentas do navegador. Durante o carregamento, o anel e a mensagem devem aparecer visualmente; com um leitor de tela, a mensagem deve ser anunciada como status.
+
+## 1.4.11 — Contraste não textual (Nível AA)
+
+### Alteração
+
+Foi criado o token `borda-controle` com a cor `#5F7775`. Sobre branco, essa cor tem relação de contraste aproximada de `4,79:1`, superando o mínimo de `3:1` para limites e estados de componentes.
+
+O novo token foi aplicado em campos, seletores, paginação e botões de condição. Bordas de erro foram reforçadas e o preenchimento da barra de progresso passou a usar o verde-petróleo institucional.
+
+### Benefício
+
+Campos e controles deixam de depender de bordas em menta muito clara, tornando seus limites e estados mais perceptíveis para pessoas com baixa visão.
+
+### Como demonstrar
+
+Comparar um cartão decorativo, que mantém a borda suave, com um campo de formulário ou opção selecionável, que agora apresenta um limite mais escuro e claramente identificável.

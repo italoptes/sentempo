@@ -32,7 +32,7 @@ export function CartaoProgresso({ nome, concluidas, total }: Props) {
           aria-valuenow={concluidas} aria-valuemin={0} aria-valuemax={total}
           aria-label={`${concluidas} de ${total} tentativas concluídas`}>
           <div
-            className="h-full bg-destaque rounded-full transition-all duration-500"
+            className="h-full bg-principal rounded-full transition-all duration-500"
             style={{ width: `${porcentagem}%` }}
           />
         </div>
