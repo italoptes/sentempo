@@ -8,7 +8,7 @@ import { ErroAPI } from '../servicos/api';
 import { Ring } from '../componentes/loading-ui/Ring';
 
 interface Props {
-  onParticipanteDefinido: (id: string) => void;
+  onParticipanteDefinido: (id: string, novoParticipante: boolean) => void;
 }
 
 export function Entrada({ onParticipanteDefinido }: Props) {
@@ -33,7 +33,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
     setCarregando(true);
     try {
       const participante = await acessarParticipante(nome.trim(), codigo);
-      onParticipanteDefinido(participante.id);
+      onParticipanteDefinido(participante.id, participante.novo_participante);
       navigate('/inicio');
     } catch (e) {
       if (e instanceof ErroAPI && e.status === 422) {

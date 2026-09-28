@@ -12,6 +12,8 @@ def test_cria_e_recupera_participante_sem_diferenciar_maiusculas(cliente):
     assert segunda.status_code == 200
     assert primeira.json()["id"] == segunda.json()["id"]
     assert primeira.json()["codigo"] == "0042"
+    assert primeira.json()["novo_participante"] is True
+    assert segunda.json()["novo_participante"] is False
 
 
 def test_nome_igual_com_codigo_diferente_cria_perfis_distintos(cliente):
@@ -36,4 +38,3 @@ def test_detalhe_contem_nove_combinacoes(cliente, participante):
     resposta = cliente.get(f"/api/participantes/{participante['id']}")
     assert resposta.status_code == 200
     assert len(resposta.json()["combinacoes"]) == 9
-

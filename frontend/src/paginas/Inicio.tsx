@@ -10,15 +10,25 @@ import { SeletorCondicao } from '../componentes/SeletorCondicao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
+import { TutorialComoFunciona } from '../componentes/TutorialComoFunciona';
 
 interface Props {
   participante: ParticipanteDetalhe;
   modoLivre: ModoLivreStatus | null;
+  tutorialAberto: boolean;
+  onFecharTutorial: () => void;
   onSair: () => void;
   onRecarregar: () => Promise<void>;
 }
 
-export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props) {
+export function Inicio({
+  participante,
+  modoLivre,
+  tutorialAberto,
+  onFecharTutorial,
+  onSair,
+  onRecarregar,
+}: Props) {
   const navigate = useNavigate();
   const [tempoSelecionado, setTempoSelecionado] = useState<number | null>(null);
   const [paginaDesafio, setPaginaDesafio] = useState(0);
@@ -89,6 +99,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
+      <TutorialComoFunciona aberto={tutorialAberto} onFechar={onFecharTutorial} />
       {/* Cabeçalho */}
       <header className="bg-principal shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">

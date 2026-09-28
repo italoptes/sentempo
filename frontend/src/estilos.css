@@ -86,8 +86,17 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes tutorial-entrar {
+  from { opacity: 0; transform: translateX(1rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .pagina-entrar {
   animation: entrar 0.25s ease-out;
+}
+
+.tutorial-etapa {
+  animation: tutorial-entrar 0.25s ease-out;
 }
 
 .desafio-paginas::-webkit-scrollbar {
@@ -110,5 +119,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   [style*="loading-ui-ring-spin"] {
     animation-duration: 2s !important;
+  }
+
+  .tutorial-etapa {
+    animation: none;
   }
 }

@@ -18,7 +18,9 @@ export function Aplicacao() {
     detalhe,
     carregando,
     modoLivre,
+    tutorialAberto,
     definirParticipante,
+    fecharTutorial,
     sair,
     recarregar,
   } = usarParticipante();
@@ -57,6 +59,8 @@ export function Aplicacao() {
               <Inicio
                 participante={detalhe}
                 modoLivre={modoLivre}
+                tutorialAberto={tutorialAberto}
+                onFecharTutorial={fecharTutorial}
                 onSair={sair}
                 onRecarregar={recarregar}
               />

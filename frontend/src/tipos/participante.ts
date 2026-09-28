@@ -10,6 +10,7 @@ export interface ParticipanteAcesso {
   nome: string;
   codigo: string;
   progresso: Progresso;
+  novo_participante: boolean;
 }
 
 export interface Combinacao {
