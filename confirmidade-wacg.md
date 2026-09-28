@@ -50,6 +50,8 @@ As áreas acionáveis pequenas passaram a ter no mínimo `44 × 44` pixels. A al
 
 O indicador circular do desafio continua visualmente pequeno, mas agora está dentro de uma área de toque maior e transparente.
 
+Nos cards mobile de resultados, o botão de exclusão foi movido para um cabeçalho próprio, ao lado da condição. O tempo deixou de ser repetido dentro de cada card, pois já identifica o agrupamento. Assim, a área de `44 × 44` pixels é preservada sem sobrepor informações.
+
 ### Benefício
 
 Áreas maiores reduzem toques acidentais e facilitam a operação para pessoas com baixa precisão motora ou que utilizam a aplicação em telas pequenas.

@@ -59,40 +59,49 @@ export function TabelaResultados({
             )}
             <div className="grid grid-cols-1 gap-3">
               {tentativasDoTempo.map((t) => (
-                <div key={t.id} className="bg-branco rounded-xl border border-destaque-claro p-4 relative space-y-2 shadow-sm">
-                  {onExcluir && (
-                    <button
-                      type="button"
-                      aria-label={`Excluir tentativa de ${rotularTempo(t.tempo_alvo_ms)}, condição ${rotularCondicao(t.condicao)}`}
-                      onClick={() => onExcluir(t.id)}
-                      className="absolute top-1 right-1 inline-flex min-h-11 min-w-11 items-center justify-center text-red-400 hover:text-red-600 bg-red-50 rounded-full"
-                    >
-                      <span aria-hidden="true">✕</span>
-                    </button>
-                  )}
-                  <div className="flex justify-between items-center pr-8">
-                    <span className="text-xs text-texto-secundario uppercase font-semibold">Tempo</span>
-                    <span className="text-principal font-medium">{rotularTempo(t.tempo_alvo_ms)}</span>
+                <article
+                  key={t.id}
+                  aria-label={`Tentativa na condição ${rotularCondicao(t.condicao)}`}
+                  className="overflow-hidden rounded-xl border border-destaque-claro bg-branco shadow-sm"
+                >
+                  <div className="flex min-h-16 items-center gap-3 border-b border-destaque-claro bg-fundo px-4 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-texto-secundario">
+                        Condição
+                      </p>
+                      <p className="font-semibold leading-snug text-principal">
+                        {rotularCondicao(t.condicao)}
+                      </p>
+                    </div>
+                    {onExcluir && (
+                      <button
+                        type="button"
+                        aria-label={`Excluir tentativa de ${rotularTempo(t.tempo_alvo_ms)}, condição ${rotularCondicao(t.condicao)}`}
+                        onClick={() => onExcluir(t.id)}
+                        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 transition-colors hover:bg-red-100 hover:text-red-700"
+                      >
+                        <span aria-hidden="true">✕</span>
+                      </button>
+                    )}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-texto-secundario uppercase font-semibold">Condição</span>
-                    <span className="text-principal font-medium">{rotularCondicao(t.condicao)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-texto-secundario uppercase font-semibold">Resultado</span>
-                    <span className="text-principal font-mono">{formatarSegundos(t.resultado_ms)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-texto-secundario uppercase font-semibold">Erro</span>
-                    <span className={`font-mono font-medium ${t.erro_ms < 0 ? 'text-blue-600' : t.erro_ms > 0 ? 'text-orange-600' : 'text-green-700'}`}>
-                      {formatarErro(t.erro_ms)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-texto-secundario uppercase font-semibold">Erro Absoluto</span>
-                    <span className="text-principal font-mono">{formatarErroAbsoluto(t.erro_absoluto_ms)}</span>
-                  </div>
-                </div>
+
+                  <dl className="space-y-2.5 px-4 py-3.5">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <dt className="text-xs font-semibold uppercase text-texto-secundario">Resultado</dt>
+                      <dd className="font-mono text-principal">{formatarSegundos(t.resultado_ms)}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <dt className="text-xs font-semibold uppercase text-texto-secundario">Erro</dt>
+                      <dd className={`font-mono font-medium ${t.erro_ms < 0 ? 'text-blue-600' : t.erro_ms > 0 ? 'text-orange-600' : 'text-green-700'}`}>
+                        {formatarErro(t.erro_ms)}
+                      </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <dt className="text-xs font-semibold uppercase text-texto-secundario">Erro absoluto</dt>
+                      <dd className="font-mono text-principal">{formatarErroAbsoluto(t.erro_absoluto_ms)}</dd>
+                    </div>
+                  </dl>
+                </article>
               ))}
             </div>
           </section>
