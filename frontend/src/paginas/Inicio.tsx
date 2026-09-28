@@ -142,10 +142,15 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                   onClick={() => irParaPaginaDesafio(pagina)}
                   aria-label={`Ir para ${pagina === 0 ? 'escolha do tempo' : 'escolha da condição'}`}
                   aria-current={paginaDesafio === pagina ? 'step' : undefined}
-                  className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                    paginaDesafio === pagina ? 'bg-destaque' : 'bg-destaque-claro'
-                  }`}
-                />
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                      paginaDesafio === pagina ? 'bg-principal' : 'bg-destaque-claro'
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           </section>
@@ -211,7 +216,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                         onClick={() => {
                           setTempoParaJogar({ id: t.id, ms: t.tempo_alvo_ms });
                         }}
-                        className="mt-2 text-xs text-destaque font-medium hover:underline"
+                        className="mt-2 inline-flex min-h-11 min-w-11 items-center justify-center text-xs text-destaque font-medium hover:underline"
                       >
                         Jogar
                       </button>
@@ -220,7 +225,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                         onClick={() => {
                           setTempoParaExcluir(t.id);
                         }}
-                        className="absolute top-1 right-2 text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                        className="absolute top-0 right-0 inline-flex min-h-11 min-w-11 items-center justify-center text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         title="Excluir tempo"
                       >
                         ✕

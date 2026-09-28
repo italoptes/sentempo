@@ -41,3 +41,19 @@ Pessoas que navegam por teclado conseguem identificar qual controle está ativo 
 ### Como demonstrar
 
 Pressionar `Tab` repetidamente nas telas de início e resultados. O indicador deve acompanhar todos os controles e revelar os botões de exclusão quando eles recebem foco.
+
+## 2.5.8 — Tamanho do alvo (mínimo) (Nível AA)
+
+### Alteração
+
+As áreas acionáveis pequenas passaram a ter no mínimo `44 × 44` pixels. A alteração abrange os indicadores de página do desafio, as ações de jogar, excluir tentativas e excluir tempos, além das ações compactas nas tabelas administrativas.
+
+O indicador circular do desafio continua visualmente pequeno, mas agora está dentro de uma área de toque maior e transparente.
+
+### Benefício
+
+Áreas maiores reduzem toques acidentais e facilitam a operação para pessoas com baixa precisão motora ou que utilizam a aplicação em telas pequenas.
+
+### Como demonstrar
+
+Ativar a visualização mobile do navegador e inspecionar a área dos botões. O círculo de paginação deve ocupar visualmente pouco espaço, mas seu botão deve medir `44 × 44` pixels.

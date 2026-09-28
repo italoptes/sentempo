@@ -78,14 +78,14 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               <button
                   type="button"
                   onClick={() => onDetalhar(item.id)}
-                  className="text-destaque font-medium hover:underline text-sm"
+                  className="inline-flex min-h-11 items-center justify-center px-2 text-destaque font-medium hover:underline text-sm"
                 >
                   Ver detalhes
                 </button>
                 <button
                   type="button"
                   onClick={() => onExcluirConta(item.id)}
-                  className="text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
+                  className="inline-flex min-h-11 items-center justify-center px-2 text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
                 >
                   Excluir
                 </button>
@@ -132,14 +132,14 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                     <button
                       type="button"
                       onClick={() => onDetalhar(item.id)}
-                      className="text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
                       Ver
                     </button>
                     <button
                       type="button"
                       onClick={() => onExcluirConta(item.id)}
-                      className="text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
                         focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
                       Excluir

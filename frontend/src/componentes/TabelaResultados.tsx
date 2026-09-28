@@ -64,7 +64,7 @@ export function TabelaResultados({
                     <button
                       type="button"
                       onClick={() => onExcluir(t.id)}
-                      className="absolute top-3 right-3 text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded-full"
+                      className="absolute top-1 right-1 inline-flex min-h-11 min-w-11 items-center justify-center text-red-400 hover:text-red-600 bg-red-50 rounded-full"
                       title="Excluir tentativa"
                     >
                       ✕
@@ -133,7 +133,7 @@ export function TabelaResultados({
                           <button
                             type="button"
                             onClick={() => onExcluir(t.id)}
-                            className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded hover:bg-red-50"
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded hover:bg-red-50"
                             title="Excluir tentativa"
                           >
                             ✕
