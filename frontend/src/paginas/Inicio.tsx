@@ -24,6 +24,9 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
   const [paginaDesafio, setPaginaDesafio] = useState(0);
   const [resultadosAbertos, setResultadosAbertos] = useState(true);
   const paginasDesafioRef = useRef<HTMLDivElement>(null);
+  const inputNovoTempoRef = useRef<HTMLInputElement>(null);
+  const [novoTempo, setNovoTempo] = useState('');
+  const [erroNovoTempo, setErroNovoTempo] = useState<string | null>(null);
 
   const [tempoParaExcluir, setTempoParaExcluir] = useState<string | null>(null);
   const [tentativaParaExcluir, setTentativaParaExcluir] = useState<string | null>(null);
@@ -56,6 +59,30 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
     const ultimaPagina = container.scrollWidth - container.clientWidth;
     container.scrollTo({ left: pagina === 0 ? 0 : ultimaPagina, behavior: 'smooth' });
   }, []);
+
+  const handleAdicionarTempo = useCallback(async () => {
+    const valor = Number(novoTempo);
+    if (!Number.isInteger(valor) || valor < 1 || valor > 120) {
+      setErroNovoTempo('Digite um número inteiro entre 1 e 120 segundos.');
+      inputNovoTempoRef.current?.focus();
+      return;
+    }
+
+    try {
+      const { criarTempoPersonalizado } = await import('../servicos/modo_livre');
+      await criarTempoPersonalizado(participante.id, valor * 1000);
+      await onRecarregar();
+      setNovoTempo('');
+      setErroNovoTempo(null);
+    } catch (erro) {
+      setErroNovoTempo(
+        erro instanceof Error
+          ? `${erro.message} Verifique os dados e tente novamente.`
+          : 'Não foi possível adicionar o tempo. Tente novamente.',
+      );
+      inputNovoTempoRef.current?.focus();
+    }
+  }, [novoTempo, onRecarregar, participante.id]);
 
   const concluidas = participante.progresso.concluidas;
   const total = participante.progresso.total;
@@ -176,35 +203,45 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
             <div className="space-y-4">
               <p className="text-texto-secundario text-sm">Crie tentativas com o tempo que quiser (1 a 120 segundos). Estas tentativas não afetam as estatísticas principais.</p>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="number"
-                  placeholder="Tempo em segundos..."
-                  className="flex-1 px-4 py-2 rounded-xl border border-borda-controle bg-branco text-principal text-sm focus:outline-none focus:border-principal"
-                  id="input-novo-tempo"
-                />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const input = document.getElementById('input-novo-tempo') as HTMLInputElement;
-                    const val = parseInt(input.value, 10);
-                    if (isNaN(val) || val < 1 || val > 120) {
-                      alert('Insira um tempo entre 1 e 120 segundos');
-                      return;
-                    }
-                    try {
-                      const { criarTempoPersonalizado } = await import('../servicos/modo_livre');
-                      await criarTempoPersonalizado(participante.id, val * 1000);
-                      await onRecarregar();
-                      input.value = '';
-                    } catch (e) {
-                      alert(e instanceof Error ? e.message : 'Erro ao criar tempo');
-                    }
-                  }}
-                  className="px-5 py-2 bg-destaque text-principal font-medium rounded-xl hover:bg-[#00a890] transition-colors"
-                >
-                  Adicionar
-                </button>
+              <div className="space-y-2">
+                <label htmlFor="input-novo-tempo" className="block text-sm font-medium text-principal">
+                  Tempo personalizado em segundos
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    ref={inputNovoTempoRef}
+                    id="input-novo-tempo"
+                    type="number"
+                    min={1}
+                    max={120}
+                    step={1}
+                    value={novoTempo}
+                    onChange={(event) => {
+                      setNovoTempo(event.target.value);
+                      setErroNovoTempo(null);
+                    }}
+                    aria-invalid={erroNovoTempo !== null}
+                    aria-describedby={`ajuda-novo-tempo${erroNovoTempo ? ' erro-novo-tempo' : ''}`}
+                    className={`flex-1 px-4 py-2 rounded-xl border bg-branco text-principal text-sm focus:outline-none focus:border-principal ${
+                      erroNovoTempo ? 'border-red-600' : 'border-borda-controle'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { void handleAdicionarTempo(); }}
+                    className="px-5 py-2 bg-destaque text-principal font-medium rounded-xl hover:bg-[#00a890] transition-colors"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+                <p id="ajuda-novo-tempo" className="text-xs text-texto-secundario">
+                  Use um número inteiro de 1 a 120.
+                </p>
+                {erroNovoTempo && (
+                  <p id="erro-novo-tempo" role="alert" className="text-xs font-medium text-red-700">
+                    {erroNovoTempo}
+                  </p>
+                )}
               </div>
 
               {modoLivre.tempos.length > 0 && (

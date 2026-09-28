@@ -133,3 +133,26 @@ A sequência de navegação permanece lógica mesmo quando React substitui a tel
 ### Como demonstrar
 
 Usando apenas teclado, abrir e fechar uma confirmação e verificar o retorno do foco. Em seguida, navegar para outra rota e observar que o conteúdo principal recebe o foco.
+
+## 3.3.3 — Sugestão de erro (Nível AA)
+
+### Alteração
+
+O cadastro de tempo personalizado deixou de utilizar alertas genéricos do navegador. O campo agora possui estado controlado, limites nativos, instrução persistente e mensagem de correção associada por `aria-describedby`.
+
+Quando o valor é inválido, a aplicação:
+
+- marca o campo com `aria-invalid="true"`;
+- apresenta “Digite um número inteiro entre 1 e 120 segundos”;
+- anuncia a mensagem com `role="alert"`;
+- devolve o foco ao campo que precisa ser corrigido.
+
+Erros retornados pela API também são complementados com uma orientação para revisar os dados e tentar novamente.
+
+### Benefício
+
+A pessoa não recebe apenas a informação de que algo falhou: ela sabe exatamente qual formato é aceito e onde deve realizar a correção.
+
+### Como demonstrar
+
+Tentar adicionar os valores `0`, `121`, `1.5` e um campo vazio. Em todos os casos, a mensagem deve explicar o intervalo e o formato esperado sem abrir um alerta do navegador.
