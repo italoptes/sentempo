@@ -82,7 +82,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-8">
         {/* Progresso */}
         <CartaoProgresso
           nome={participante.nome}

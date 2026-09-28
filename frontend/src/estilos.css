@@ -60,6 +60,25 @@ body {
   box-shadow: none;
 }
 
+.link-pular-conteudo {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 0.75rem;
+  background: #FFFFFF;
+  color: #0F2D2E;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: transform 0.15s ease-out;
+}
+
+.link-pular-conteudo:focus-visible {
+  transform: translateY(0);
+}
+
 
 /* Transições de página */
 @keyframes entrar {

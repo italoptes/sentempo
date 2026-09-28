@@ -47,7 +47,7 @@ export function Entrada({ onParticipanteDefinido }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+    <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center">

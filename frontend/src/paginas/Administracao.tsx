@@ -31,7 +31,7 @@ function TelaLogin({
   }
 
   return (
-    <div className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
+    <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <img src="/images/logo_principal.png" alt="Sentempo" className="h-14 mx-auto object-contain mb-4" />
@@ -186,7 +186,7 @@ export function Administracao() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-10">
+      <main id="conteudo-principal" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 space-y-10">
         {/* Erro geral */}
         {erro && !carregando && (
           <p role="alert" className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{erro}</p>

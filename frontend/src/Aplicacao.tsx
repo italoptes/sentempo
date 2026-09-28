@@ -25,6 +25,9 @@ export function Aplicacao() {
   return (
     <>
       <TituloPagina />
+      <a href="#conteudo-principal" className="link-pular-conteudo">
+        Ir para o conteúdo principal
+      </a>
       <Routes>
         {/* Entrada */}
         <Route
@@ -45,7 +48,7 @@ export function Aplicacao() {
             !participanteId ? (
               <Navigate to="/" replace />
             ) : carregando && !detalhe ? (
-              <div className="min-h-screen bg-fundo flex items-center justify-center">
+              <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex items-center justify-center">
                 <IndicadorCarregamento mensagem="Carregando perfil..." />
               </div>
             ) : detalhe ? (

@@ -97,3 +97,19 @@ Campos e controles deixam de depender de bordas em menta muito clara, tornando s
 ### Como demonstrar
 
 Comparar um cartão decorativo, que mantém a borda suave, com um campo de formulário ou opção selecionável, que agora apresenta um limite mais escuro e claramente identificável.
+
+## 2.4.1 — Contornar blocos (Nível A)
+
+### Alteração
+
+Foi adicionado o link “Ir para o conteúdo principal” antes do roteador da aplicação. Ele permanece fora da tela durante o uso convencional e torna-se visível quando recebe foco.
+
+Todas as variações de tela, incluindo carregamento, erro e rodada ativa, agora expõem o destino `#conteudo-principal`, que pode receber foco programaticamente.
+
+### Benefício
+
+Quem navega por teclado pode ignorar cabeçalhos e outros blocos repetidos, chegando diretamente à tarefa principal da página.
+
+### Como demonstrar
+
+Recarregar uma rota e pressionar `Tab` uma vez. Acionar o link exibido deve mover a navegação diretamente para o conteúdo principal.
