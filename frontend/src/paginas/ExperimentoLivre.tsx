@@ -21,7 +21,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   const tempoAlvoMs = Number(tempoParam);
   const condicao = condicaoParam as Condicao;
 
-  const { estado, mensagemErro, pulseCount, iniciarRodada, finalizarRodada, limpar } = usarExperimento(participanteId, 'PERSONALIZADA', tempoId);
+  const { estado, mensagemErro, pulseCount, duracaoEspera, iniciarRodada, finalizarRodada, limpar } = usarExperimento(participanteId, 'PERSONALIZADA', tempoId);
 
   // Limpa ao desmontar (parar áudio e agendamentos)
   useEffect(() => {
@@ -50,10 +50,21 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
 
   const comEstimulo = condicao === 'RAPIDO' || condicao === 'LENTO';
 
+  if (estado === 'preparando') {
+    return (
+      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+        <IndicadorCarregamento mensagem="Preparando..." temaEscuro variante="barra" duracaoMs={duracaoEspera} />
+      </div>
+    );
+  }
+
   // === TELA ATIVA — sem nenhuma informação temporal ===
   if (estado === 'ativa') {
     return (
-      <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+      <div id="conteudo-principal" tabIndex={-1} className="relative min-h-screen bg-principal flex flex-col items-center justify-center px-4 py-12 gap-12">
+        <p role="status" aria-live="polite" className="absolute top-12 text-destaque-claro text-base font-medium">
+          Em andamento
+        </p>
         {/* Estímulo visual (somente para RAPIDO e LENTO) */}
         <CirculoEstimulo pulseCount={pulseCount} visivel={comEstimulo} />
 
