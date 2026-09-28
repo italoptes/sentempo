@@ -1,6 +1,6 @@
 // paginas/Administracao.tsx — Dashboard administrativo (rota /administracao)
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usarAdministracao } from '../ganchos/usarAdministracao';
 import { ResumoEstatisticas, TabelaEstatisticas } from '../componentes/ResumoEstatisticas';
 import { TabelaParticipantes } from '../componentes/TabelaParticipantes';
@@ -114,6 +114,7 @@ export function Administracao() {
   const [modalZerar, setModalZerar] = useState(false);
   const [modalExcluirConta, setModalExcluirConta] = useState<string | null>(null);
   const [tentativaParaExcluir, setTentativaParaExcluir] = useState<{ participanteId: string, tentativaId: string } | null>(null);
+  const painelDetalheRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (autenticado) {
@@ -125,7 +126,8 @@ export function Administracao() {
   useEffect(() => {
     if (detalhe) {
       setTimeout(() => {
-        document.getElementById('painel-detalhe')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        painelDetalheRef.current?.focus({ preventScroll: true });
+        painelDetalheRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 50);
     }
   }, [detalhe]);
@@ -300,7 +302,13 @@ export function Administracao() {
 
         {/* Painel de detalhe do participante */}
         {detalhe && (
-          <section id="painel-detalhe" aria-label="Detalhe do participante" className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6">
+          <section
+            ref={painelDetalheRef}
+            id="painel-detalhe"
+            tabIndex={-1}
+            aria-label="Detalhe do participante"
+            className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-6"
+          >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-principal">{detalhe.participante.nome}</h2>

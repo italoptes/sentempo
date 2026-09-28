@@ -10,6 +10,7 @@ import { Administracao } from './paginas/Administracao';
 import { PWAModal } from './componentes/PWAModal';
 import { TituloPagina } from './componentes/TituloPagina';
 import { IndicadorCarregamento } from './componentes/IndicadorCarregamento';
+import { GerenciadorFocoRota } from './componentes/GerenciadorFocoRota';
 
 export function Aplicacao() {
   const {
@@ -25,6 +26,7 @@ export function Aplicacao() {
   return (
     <>
       <TituloPagina />
+      <GerenciadorFocoRota />
       <a href="#conteudo-principal" className="link-pular-conteudo">
         Ir para o conteúdo principal
       </a>

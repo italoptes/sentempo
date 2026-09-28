@@ -113,3 +113,23 @@ Quem navega por teclado pode ignorar cabeçalhos e outros blocos repetidos, cheg
 ### Como demonstrar
 
 Recarregar uma rota e pressionar `Tab` uma vez. Acionar o link exibido deve mover a navegação diretamente para o conteúdo principal.
+
+## 2.4.3 — Ordem do foco (Nível A)
+
+### Alteração
+
+O componente `GerenciadorFocoRota` move o foco para o conteúdo principal após uma navegação interna da aplicação, sem interferir no primeiro carregamento da página.
+
+Também foram tratados os seguintes fluxos:
+
+- ao abrir o detalhe de um participante, o painel recebe foco antes de ser rolado para a área visível;
+- o diálogo de confirmação envia o foco ao botão de cancelamento e o devolve ao controle que o abriu;
+- o modal de instalação PWA contém a navegação por `Tab` e restaura o foco ao ser fechado.
+
+### Benefício
+
+A sequência de navegação permanece lógica mesmo quando React substitui a tela ou insere conteúdo sem um recarregamento tradicional do navegador.
+
+### Como demonstrar
+
+Usando apenas teclado, abrir e fechar uma confirmação e verificar o retorno do foco. Em seguida, navegar para outra rota e observar que o conteúdo principal recebe o foco.
