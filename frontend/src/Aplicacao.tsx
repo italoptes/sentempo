@@ -8,6 +8,7 @@ import { Experimento } from './paginas/Experimento';
 import { ExperimentoLivre } from './paginas/ExperimentoLivre';
 import { Administracao } from './paginas/Administracao';
 import { PWAModal } from './componentes/PWAModal';
+import { TituloPagina } from './componentes/TituloPagina';
 
 export function Aplicacao() {
   const {
@@ -22,6 +23,7 @@ export function Aplicacao() {
 
   return (
     <>
+      <TituloPagina />
       <Routes>
         {/* Entrada */}
         <Route
