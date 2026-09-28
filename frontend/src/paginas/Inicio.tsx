@@ -260,13 +260,13 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                       </button>
                       <button
                         type="button"
+                        aria-label={`Excluir tempo personalizado de ${t.tempo_alvo_ms / 1000} segundos`}
                         onClick={() => {
                           setTempoParaExcluir(t.id);
                         }}
                         className="absolute top-0 right-0 inline-flex min-h-11 min-w-11 items-center justify-center text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-                        title="Excluir tempo"
                       >
-                        ✕
+                        <span aria-hidden="true">✕</span>
                       </button>
                     </div>
                   ))}

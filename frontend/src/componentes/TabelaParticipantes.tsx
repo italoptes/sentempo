@@ -77,6 +77,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
               <div className="flex justify-end gap-3 pt-2 border-t border-destaque-claro/50 mt-2">
               <button
                   type="button"
+                  aria-label={`Ver detalhes de ${item.nome}`}
                   onClick={() => onDetalhar(item.id)}
                   className="inline-flex min-h-11 items-center justify-center px-2 text-destaque font-medium hover:underline text-sm"
                 >
@@ -84,6 +85,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                 </button>
                 <button
                   type="button"
+                  aria-label={`Excluir participante ${item.nome}`}
                   onClick={() => onExcluirConta(item.id)}
                   className="inline-flex min-h-11 items-center justify-center px-2 text-red-500 hover:text-red-700 transition-colors text-sm font-medium"
                 >
@@ -131,6 +133,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                   <td className="px-4 py-3 text-center flex justify-center gap-2 items-center">
                     <button
                       type="button"
+                      aria-label={`Ver detalhes de ${item.nome}`}
                       onClick={() => onDetalhar(item.id)}
                       className="inline-flex min-h-11 min-w-11 items-center justify-center text-destaque text-xs font-medium hover:underline focus-visible:outline-2 focus-visible:outline-destaque rounded"
                     >
@@ -138,6 +141,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                     </button>
                     <button
                       type="button"
+                      aria-label={`Excluir participante ${item.nome}`}
                       onClick={() => onExcluirConta(item.id)}
                       className="inline-flex min-h-11 min-w-11 items-center justify-center text-red-500 hover:text-red-700 transition-colors text-xs font-medium hover:underline
                         focus-visible:outline-2 focus-visible:outline-destaque rounded"

@@ -156,3 +156,24 @@ A pessoa não recebe apenas a informação de que algo falhou: ela sabe exatamen
 ### Como demonstrar
 
 Tentar adicionar os valores `0`, `121`, `1.5` e um campo vazio. Em todos os casos, a mensagem deve explicar o intervalo e o formato esperado sem abrir um alerta do navegador.
+
+## 2.5.3 — Rótulo no nome acessível (Nível A)
+
+### Alteração
+
+Controles compactos e repetidos receberam nomes acessíveis contextualizados. Exemplos:
+
+- `Excluir tempo personalizado de 20 segundos`;
+- `Excluir tentativa de 15 segundos, condição Estímulo rápido`;
+- `Ver detalhes de Ana Silva`;
+- `Excluir participante Ana Silva`.
+
+Os símbolos visuais de exclusão foram marcados com `aria-hidden="true"`, evitando que sejam anunciados de maneira inconsistente. Nos botões que possuem texto visível, o nome acessível preserva expressões como “Ver detalhes” e “Excluir”.
+
+### Benefício
+
+Pessoas que utilizam leitor de tela ou controle por voz conseguem distinguir e acionar diretamente controles que visualmente seriam apenas um “X”, “Ver” ou “Excluir”.
+
+### Como demonstrar
+
+Percorrer uma tabela de resultados com um leitor de tela e comparar os anúncios dos diferentes botões de exclusão. Cada botão deve informar exatamente qual tentativa ou participante será afetado.

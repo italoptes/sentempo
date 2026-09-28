@@ -63,11 +63,11 @@ export function TabelaResultados({
                   {onExcluir && (
                     <button
                       type="button"
+                      aria-label={`Excluir tentativa de ${rotularTempo(t.tempo_alvo_ms)}, condição ${rotularCondicao(t.condicao)}`}
                       onClick={() => onExcluir(t.id)}
                       className="absolute top-1 right-1 inline-flex min-h-11 min-w-11 items-center justify-center text-red-400 hover:text-red-600 bg-red-50 rounded-full"
-                      title="Excluir tentativa"
                     >
-                      ✕
+                      <span aria-hidden="true">✕</span>
                     </button>
                   )}
                   <div className="flex justify-between items-center pr-8">
@@ -132,11 +132,11 @@ export function TabelaResultados({
                         <td className="px-4 py-3 text-center">
                           <button
                             type="button"
+                            aria-label={`Excluir tentativa de ${rotularTempo(t.tempo_alvo_ms)}, condição ${rotularCondicao(t.condicao)}`}
                             onClick={() => onExcluir(t.id)}
                             className="inline-flex min-h-11 min-w-11 items-center justify-center text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded hover:bg-red-50"
-                            title="Excluir tentativa"
                           >
-                            ✕
+                            <span aria-hidden="true">✕</span>
                           </button>
                         </td>
                       )}
