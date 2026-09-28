@@ -9,6 +9,8 @@ import type { ParticipanteAdministracao } from '../tipos/administracao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { rotularCondicao, rotularTempo, formatarErro, formatarErroAbsoluto } from '../utilitarios/formatacao';
+import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
+import { Ring } from '../componentes/loading-ui/Ring';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 function TelaLogin({
@@ -74,7 +76,12 @@ function TelaLogin({
                 hover:bg-[#0a2021] transition-colors focus-visible:outline-2 focus-visible:outline-destaque
                 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {carregando ? 'Autenticando...' : 'Entrar'}
+              {carregando ? (
+                <span role="status" aria-live="polite" className="inline-flex items-center justify-center gap-2">
+                  <Ring className="size-4" />
+                  Autenticando...
+                </span>
+              ) : 'Entrar'}
             </button>
           </form>
         </div>
@@ -243,7 +250,7 @@ export function Administracao() {
             )}
           </>
         ) : carregando ? (
-          <p className="text-texto-secundario animate-pulse">Carregando dados...</p>
+          <IndicadorCarregamento mensagem="Carregando dados administrativos..." />
         ) : null}
 
         {/* Exportação CSV */}

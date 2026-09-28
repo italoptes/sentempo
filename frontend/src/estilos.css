@@ -86,3 +86,9 @@ body {
   min-width: 100%;
   scroll-snap-align: start;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="loading-ui-ring-spin"] {
+    animation-duration: 2s !important;
+  }
+}

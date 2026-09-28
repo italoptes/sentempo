@@ -9,6 +9,7 @@ import { ExperimentoLivre } from './paginas/ExperimentoLivre';
 import { Administracao } from './paginas/Administracao';
 import { PWAModal } from './componentes/PWAModal';
 import { TituloPagina } from './componentes/TituloPagina';
+import { IndicadorCarregamento } from './componentes/IndicadorCarregamento';
 
 export function Aplicacao() {
   const {
@@ -45,7 +46,7 @@ export function Aplicacao() {
               <Navigate to="/" replace />
             ) : carregando && !detalhe ? (
               <div className="min-h-screen bg-fundo flex items-center justify-center">
-                <p className="text-texto-secundario animate-pulse">Carregando perfil...</p>
+                <IndicadorCarregamento mensagem="Carregando perfil..." />
               </div>
             ) : detalhe ? (
               <Inicio

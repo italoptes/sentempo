@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { acessarParticipante } from '../servicos/participantes';
 import { validarNome, validarCodigo } from '../utilitarios/validacao';
 import { ErroAPI } from '../servicos/api';
+import { Ring } from '../componentes/loading-ui/Ring';
 
 interface Props {
   onParticipanteDefinido: (id: string) => void;
@@ -126,7 +127,12 @@ export function Entrada({ onParticipanteDefinido }: Props) {
                 hover:bg-[#00a890] active:scale-95 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-destaque
                 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
             >
-              {carregando ? 'Entrando...' : 'Entrar'}
+              {carregando ? (
+                <span role="status" aria-live="polite" className="inline-flex items-center justify-center gap-2">
+                  <Ring className="size-4" />
+                  Entrando...
+                </span>
+              ) : 'Entrar'}
             </button>
           </form>
         </div>

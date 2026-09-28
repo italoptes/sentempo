@@ -7,6 +7,7 @@ import { CirculoEstimulo } from '../componentes/CirculoEstimulo';
 import { BotaoFinalizar } from '../componentes/BotaoFinalizar';
 import { rotularTempo, rotularCondicao } from '../utilitarios/formatacao';
 import type { Condicao } from '../utilitarios/estimulo';
+import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 
 interface Props {
   participanteId: string;
@@ -66,7 +67,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   if (estado === 'finalizando') {
     return (
       <div className="min-h-screen bg-principal flex items-center justify-center">
-        <p className="text-destaque-claro text-lg font-medium animate-pulse">Salvando...</p>
+        <IndicadorCarregamento mensagem="Salvando resultado..." temaEscuro />
       </div>
     );
   }

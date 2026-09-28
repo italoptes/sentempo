@@ -9,6 +9,7 @@ import { SeletorTempo } from '../componentes/SeletorTempo';
 import { SeletorCondicao } from '../componentes/SeletorCondicao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
+import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 
 interface Props {
   participante: ParticipanteDetalhe;
@@ -166,7 +167,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
           <h2 className="text-base font-semibold text-principal">Modo Livre</h2>
 
           {!modoLivre ? (
-            <p className="text-texto-secundario text-sm animate-pulse">Carregando status do Modo Livre...</p>
+            <IndicadorCarregamento mensagem="Carregando status do Modo Livre..." compacto />
           ) : !modoLivre.desbloqueado ? (
             <p className="text-texto-secundario text-sm bg-fundo rounded-xl px-4 py-3">
               Realize pelo menos uma atividade oficial de 15 segundos e uma atividade de 30 segundos para desbloquear.

@@ -57,3 +57,27 @@ O indicador circular do desafio continua visualmente pequeno, mas agora está de
 ### Como demonstrar
 
 Ativar a visualização mobile do navegador e inspecionar a área dos botões. O círculo de paginação deve ocupar visualmente pouco espaço, mas seu botão deve medir `44 × 44` pixels.
+
+## 4.1.3 — Mensagens de status (Nível AA)
+
+### Alteração
+
+Foi incorporado o componente `Ring`, disponibilizado pelo [Loading UI](https://www.loading-ui.com/docs/components/ring), e criado o componente reutilizável `IndicadorCarregamento`.
+
+O indicador combina a animação visual com:
+
+- `role="status"`;
+- `aria-live="polite"`;
+- `aria-atomic="true"`;
+- mensagem de texto visível;
+- SVG decorativo removido da árvore de acessibilidade.
+
+O indicador é utilizado ao carregar o perfil, o Modo Livre e a administração, ao autenticar e ao salvar resultados.
+
+### Benefício
+
+Além de enxergar que uma operação está em andamento, pessoas que utilizam leitores de tela recebem a mensagem sem que o foco seja movido.
+
+### Como demonstrar
+
+Simular uma conexão lenta nas ferramentas do navegador. Durante o carregamento, o anel e a mensagem devem aparecer visualmente; com um leitor de tela, a mensagem deve ser anunciada como status.
