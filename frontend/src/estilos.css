@@ -46,8 +46,17 @@ body {
 
 /* Foco visível */
 :focus-visible {
-  outline: 2px solid #00C2A8;
-  outline-offset: 2px;
+  /* Indicador em duas cores: permanece perceptível em fundos claros e escuros. */
+  outline: 3px solid transparent !important;
+  outline-offset: 3px !important;
+  box-shadow:
+    0 0 0 3px #FFFFFF,
+    0 0 0 6px #00796B !important;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 

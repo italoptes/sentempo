@@ -220,7 +220,7 @@ export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props)
                         onClick={() => {
                           setTempoParaExcluir(t.id);
                         }}
-                        className="absolute top-1 right-2 text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-2 text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         title="Excluir tempo"
                       >
                         ✕
