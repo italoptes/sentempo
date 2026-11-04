@@ -18,6 +18,10 @@ class TentativaDuplicada(Exception):
     pass
 
 
+class TentativaNaoEncontrada(Exception):
+    pass
+
+
 class TentativaServico:
     def __init__(self, sessao: Session):
         self.sessao = sessao
@@ -83,6 +87,5 @@ class TentativaServico:
         if apagados > 0:
             self.sessao.commit()
         else:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail="Tentativa não encontrada para este participante")
+            raise TentativaNaoEncontrada
 

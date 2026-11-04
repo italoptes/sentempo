@@ -56,7 +56,7 @@ export function PWAModal() {
   }, []);
 
   useEffect(() => {
-    if (!mostrarPromptInstalacao) {
+    if (!mostrarPromptInstalacao || pathname === '/estudo-a') {
       focoAnteriorRef.current?.focus();
       focoAnteriorRef.current = null;
       return;
@@ -88,7 +88,7 @@ export function PWAModal() {
 
     document.addEventListener('keydown', manterFoco);
     return () => document.removeEventListener('keydown', manterFoco);
-  }, [mostrarPromptInstalacao]);
+  }, [mostrarPromptInstalacao, pathname]);
 
   const handleInstalarPWA = async () => {
     if (deferredPrompt) {
@@ -105,7 +105,7 @@ export function PWAModal() {
     }
   };
 
-  const fecharModal = () => {
+  function fecharModal() {
     setAnimando(false);
     setTimeout(() => {
       setMostrarPromptInstalacao(false);
@@ -113,7 +113,7 @@ export function PWAModal() {
     }, 300);
   };
 
-  const handleRecusarPWA = () => {
+  function handleRecusarPWA() {
     fecharModal();
   };
 

@@ -33,6 +33,7 @@ export function Inicio({
   const [tempoSelecionado, setTempoSelecionado] = useState<number | null>(null);
   const [paginaDesafio, setPaginaDesafio] = useState(0);
   const [resultadosAbertos, setResultadosAbertos] = useState(true);
+  const [tutorialAnteriorAberto, definirTutorialAnteriorAberto] = useState(false);
   const paginasDesafioRef = useRef<HTMLDivElement>(null);
   const inputNovoTempoRef = useRef<HTMLInputElement>(null);
   const [novoTempo, setNovoTempo] = useState('');
@@ -98,7 +99,7 @@ export function Inicio({
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
-      <TutorialComoFunciona aberto={tutorialAberto} onFechar={onFecharTutorial} />
+      <TutorialComoFunciona aberto={tutorialAnteriorAberto} onFechar={() => { definirTutorialAnteriorAberto(false); onFecharTutorial(); }} />
       {/* Cabeçalho */}
       <header className="bg-principal shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -125,7 +126,10 @@ export function Inicio({
           <p>Uma participação guiada com 27 tentativas e pausas entre três blocos. Você poderá retomar de onde parou.</p>
           <button type="button" onClick={() => navigate('/estudo-a')} className="min-h-12 rounded-xl px-6 py-3 bg-destaque text-principal font-semibold">Participar ou retomar estudo</button>
         </section>
+        <details className="space-y-6">
+        <summary className="min-h-12 cursor-pointer font-semibold">Protocolo anterior e modo livre</summary>
         <h2 className="text-lg font-semibold">Protocolo anterior — desafios de 5, 15 e 30 segundos</h2>
+        <button className="min-h-11 underline" onClick={() => definirTutorialAnteriorAberto(true)}>{tutorialAberto ? 'Conhecer' : 'Rever'} instruções do protocolo anterior</button>
         {/* Progresso */}
         <CartaoProgresso
           nome={participante.nome}
@@ -327,6 +331,7 @@ export function Inicio({
             )}
           </section>
         )}
+        </details>
       </main>
 
       {/* Modais */}

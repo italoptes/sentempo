@@ -4,7 +4,7 @@ import { criarRitmoFixo } from './ritmo_fixo';
 
 export interface AudioEstudo { iniciar: () => void; parar: () => void }
 
-export async function prepararAudioEstudo(condicao: CondicaoEstudo, volume: number, aoErro: () => void): Promise<AudioEstudo> {
+export async function prepararAudioEstudo(condicao: CondicaoEstudo, volume: number, aoErro: (motivo?: string) => void): Promise<AudioEstudo> {
   if (condicao === 'SEM_ESTIMULO') return { iniciar() {}, parar() {} };
   await Tone.start(); // Deve ser chamado diretamente a partir do gesto Iniciar.
   const contexto = Tone.getContext();
@@ -19,7 +19,11 @@ export async function prepararAudioEstudo(condicao: CondicaoEstudo, volume: numb
     (instante) => {
       if (contexto.state !== 'running') throw new Error('Áudio interrompido');
       sintetizador.triggerAttackRelease('E5', 0.045, instante);
-    }, falhar, { agora: () => contexto.immediate(), agendar: setTimeout, cancelar: clearTimeout });
+    }, falhar, {
+      agora: () => contexto.immediate(),
+      agendar: (acao, ms) => window.setTimeout(acao, ms),
+      cancelar: id => window.clearTimeout(id),
+    });
   function parar() {
     if (encerrado) return;
     encerrado = true;
@@ -27,7 +31,7 @@ export async function prepararAudioEstudo(condicao: CondicaoEstudo, volume: numb
     contexto.off('statechange', observar);
     sintetizador.dispose(); // Libera também eventos de áudio já agendados.
   }
-  function falhar() { parar(); aoErro(); }
+  function falhar(erro?: unknown) { parar(); aoErro(erro instanceof Error ? erro.message : 'A reprodução não está ativa.'); }
   function observar() { if (!encerrado && contexto.state !== 'running') falhar(); }
   contexto.on('statechange', observar);
   return { iniciar: () => { if (!encerrado) ritmo.iniciar(); }, parar };

@@ -10,6 +10,7 @@ from app.nucleo.dependencias import exigir_administrador
 from app.servicos.tentativa_servico import (
     ParticipanteNaoEncontrado,
     TentativaDuplicada,
+    TentativaNaoEncontrada,
     TentativaServico,
 )
 
@@ -68,3 +69,5 @@ async def excluir_uma_tentativa(
         TentativaServico(sessao).excluir_uma(participante_id, tentativa_id)
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
+    except TentativaNaoEncontrada as erro:
+        raise HTTPException(status_code=404, detail="Tentativa não encontrada para este participante") from erro

@@ -14,6 +14,7 @@ const botao = 'min-h-12 rounded-xl bg-destaque text-principal font-semibold px-6
 export function EstudoA({ participanteId }: { participanteId: string }) {
   const [sessao, definirSessao] = useState<SessaoEstudo | null>(null);
   const [carregando, definirCarregando] = useState(true);
+  const [consultaConfirmada, definirConsultaConfirmada] = useState(false);
   const [erro, definirErro] = useState<string | null>(null);
   const [consentimento, definirConsentimento] = useState(false);
   const [dispositivo, definirDispositivo] = useState<ContextoEstudo['dispositivo']>('COMPUTADOR');
@@ -33,11 +34,16 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
   const carregar = useCallback(async () => {
     definirCarregando(true);
     definirErro(null);
-    try { definirSessao(await consultarEstudo(participanteId)); }
+    try { definirSessao(await consultarEstudo(participanteId)); definirConsultaConfirmada(true); }
     catch { definirErro('Não foi possível consultar a sessão. Verifique sua conexão.'); }
     finally { definirCarregando(false); }
   }, [participanteId]);
-  useEffect(() => { void carregar(); }, [carregar]);
+  useEffect(() => {
+    let presente = true;
+    consultarEstudo(participanteId).then(s => { if (presente) { definirSessao(s); definirConsultaConfirmada(true); definirCarregando(false); } })
+      .catch(() => { if (presente) { definirErro('Não foi possível consultar a sessão. Verifique sua conexão.'); definirCarregando(false); } });
+    return () => { presente = false; };
+  }, [participanteId]);
   useEffect(() => { tituloRef.current?.focus(); }, [rodada.estado, sessao?.proxima?.id, sessao?.situacao, sessao?.questionario_pendente?.tentativa_id]);
 
   const pararTeste = useCallback(() => {
@@ -61,8 +67,8 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
     definirReproduziu(false);
     definirAudioOuvido(false);
     try {
-      const audio = await prepararAudioEstudo('LENTO', volume, () => {
-        pararTeste(); definirTestando(false); definirErro('O áudio foi interrompido. Teste novamente.');
+      const audio = await prepararAudioEstudo('LENTO', volume, motivo => {
+        pararTeste(); definirTestando(false); definirErro(`O áudio foi interrompido. ${motivo ?? ''} Teste novamente.`);
       });
       if (versao !== versaoTeste.current) { audio.parar(); return; }
       testeRef.current = audio;
@@ -116,7 +122,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
           {ativa ? 'Em andamento' : rodada.estado === 'interrompida' ? 'Tentativa interrompida' : 'Estudo de percepção temporal'}
         </h1>
         {erro && <p role="alert" className="rounded-xl border border-red-700 p-4">{erro} <button className="underline min-h-11" onClick={() => void carregar()}>Consultar sessão</button></p>}
-        {carregando ? <IndicadorCarregamento mensagem="Consultando sessão..." /> : erro && !sessao ? null : !sessao ? (
+        {carregando ? <IndicadorCarregamento mensagem="Consultando sessão..." /> : !consultaConfirmada ? null : !sessao ? (
           <section className="bg-branco rounded-2xl p-6 space-y-5 border border-destaque-claro">
             <p>Você vai estimar intervalos de 5, 10 e 15 segundos em três blocos, totalizando 27 tentativas. Algumas terão bipes e outras serão silenciosas.</p>
             <p>Antes de cada tentativa, informaremos o tempo-alvo. Toque em Finalizar quando acreditar que esse intervalo terminou. Estime sem contar segundos nem usar os bipes como contagem.</p>

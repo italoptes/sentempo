@@ -6,7 +6,7 @@ export interface RelogioRitmo {
 }
 
 export function criarRitmoFixo(intervalo: number, emitir: (instante: number) => void,
-  aoErro: () => void, relogio: RelogioRitmo) {
+  aoErro: (erro?: unknown) => void, relogio: RelogioRitmo) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let encerrado = false;
   let iniciado = false;
@@ -27,9 +27,9 @@ export function criarRitmoFixo(intervalo: number, emitir: (instante: number) => 
         proximo += intervalo;
       }
       timer = relogio.agendar(verificar, 25);
-    } catch {
+    } catch (erro) {
       parar();
-      aoErro();
+      aoErro(erro);
     }
   }
   return {

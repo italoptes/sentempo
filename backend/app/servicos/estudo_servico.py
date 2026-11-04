@@ -84,8 +84,8 @@ class EstudoServico:
             raise ErroEstudo(409, "Continue após o intervalo antes de iniciar o próximo bloco")
         precisao = Decimal("0.001")
         resultado = dados.resultado_ms.quantize(precisao, rounding=ROUND_HALF_UP)
-        if resultado <= 0:
-            raise ErroEstudo(422, "Duração abaixo da precisão de armazenamento")
+        if resultado <= 0 or resultado >= Decimal("1000000000000000"):
+            raise ErroEstudo(422, "Duração fora da precisão de armazenamento")
         erro = resultado - Decimal(proxima.tempo_alvo_ms)
         agora = datetime.now(timezone.utc)
         # Compare-and-set também impede sobrescrita em bancos sem SELECT FOR UPDATE.
