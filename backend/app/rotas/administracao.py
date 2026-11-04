@@ -22,6 +22,7 @@ from app.nucleo.seguranca import credenciais_validas, criar_token
 from app.servicos.estatisticas_servico import EstatisticasServico
 from app.servicos.exportacao_servico import ExportacaoServico
 from app.servicos.participante_servico import ParticipanteServico
+from app.servicos.relatorio_estudo_servico import RelatorioEstudoServico
 
 
 roteador = APIRouter(prefix="/administracao", tags=["administração"])
@@ -123,10 +124,19 @@ async def excluir_participante(
     "/exportacao.csv",
     dependencies=[Depends(exigir_administrador)],
 )
-async def exportar_csv(sessao: Annotated[Session, Depends(obter_sessao)]) -> Response:
-    conteudo = ExportacaoServico(sessao).gerar_csv()
+async def exportar_csv(sessao: Annotated[Session, Depends(obter_sessao)], origem: Literal["ANTERIOR", "ESTUDO_A", "LIVRE"] = "ANTERIOR") -> Response:
+    conteudo = ExportacaoServico(sessao).gerar_csv(origem)
     return Response(
         content=conteudo.encode("utf-8"),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="sentempo-resultados.csv"'},
     )
+
+
+@roteador.get("/estudo-a", dependencies=[Depends(exigir_administrador)])
+def painel_estudo(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    pagina: Annotated[int, Query(ge=1)] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 10,
+) -> dict:
+    return RelatorioEstudoServico(sessao).painel(pagina, tamanho)

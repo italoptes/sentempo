@@ -11,6 +11,7 @@ import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { rotularCondicao, rotularTempo, formatarErro, formatarErroAbsoluto } from '../utilitarios/formatacao';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 import { Ring } from '../componentes/loading-ui/Ring';
+import { AdministracaoEstudo } from '../componentes/AdministracaoEstudo';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 function TelaLogin({
@@ -189,6 +190,8 @@ export function Administracao() {
       </header>
 
       <main id="conteudo-principal" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 space-y-10">
+        {token && <AdministracaoEstudo token={token} />}
+        <h2 className="text-xl font-semibold">Protocolo anterior — 5, 15 e 30 segundos</h2>
         {/* Erro geral */}
         {erro && !carregando && (
           <p role="alert" className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{erro}</p>
@@ -255,35 +258,6 @@ export function Administracao() {
           <IndicadorCarregamento mensagem="Carregando dados administrativos..." />
         ) : null}
 
-        {/* Exportação CSV */}
-        {token && (
-          <div>
-            <a
-              id="btn-exportar-csv"
-              href={`${import.meta.env.VITE_URL_API ?? '/api'}/administracao/exportacao.csv`}
-              download="sentempo-resultados.csv"
-              onClick={(e) => {
-                // Usa fetch para incluir o token no header
-                e.preventDefault();
-                const url = `${import.meta.env.VITE_URL_API ?? '/api'}/administracao/exportacao.csv`;
-                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-                  .then((r) => r.blob())
-                  .then((blob) => {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'sentempo-resultados.csv';
-                    a.click();
-                  })
-                  .catch(() => alert('Erro ao exportar CSV'));
-              }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-destaque text-principal
-                font-medium rounded-xl hover:bg-[#00a890] transition-colors
-                focus-visible:outline-2 focus-visible:outline-destaque text-sm"
-            >
-              ↓ Exportar CSV
-            </a>
-          </div>
-        )}
 
         {/* Lista de participantes */}
         {pagina && (
@@ -473,8 +447,8 @@ export function Administracao() {
       {/* Modais */}
       <ModalConfirmacao
         aberto={modalZerar}
-        titulo="Zerar resultados"
-        mensagem="Tem certeza que deseja apagar todos os resultados oficiais e livres deste participante?"
+        titulo="Zerar resultados anteriores e livres"
+        mensagem="Apagar os resultados do protocolo anterior e do modo livre deste participante? As sessões do Estudo A não serão alteradas."
         textoConfirmar="Sim, apagar tudo"
         tipo="perigo"
         onConfirmar={async () => {
@@ -496,7 +470,7 @@ export function Administracao() {
       <ModalConfirmacao
         aberto={modalExcluirConta !== null}
         titulo="Excluir conta"
-        mensagem="ATENÇÃO: Tem certeza que deseja apagar a conta deste participante? TODOS os resultados oficiais, livres e configurações de tempos personalizados serão apagados permanentemente."
+        mensagem="ATENÇÃO: Apagar a conta deste participante? Todos os resultados anteriores, livres, sessões e respostas do Estudo A serão apagados permanentemente."
         textoConfirmar="Sim, excluir conta"
         tipo="perigo"
         onConfirmar={async () => {

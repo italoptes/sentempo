@@ -54,9 +54,17 @@ export async function detalharParticipante(
   return requisicao<ParticipanteAdministracao>(`/administracao/participantes/${id}`, { token });
 }
 
-export function urlExportacaoCSV(token: string): string {
-  const urlBase = import.meta.env.VITE_URL_API ?? '/api';
-  return `${urlBase}/administracao/exportacao.csv?token=${encodeURIComponent(token)}`;
+export type OrigemExportacao = 'ANTERIOR' | 'ESTUDO_A' | 'LIVRE';
+export async function baixarCSV(token: string, origem: OrigemExportacao): Promise<void> {
+  const base = import.meta.env.VITE_URL_API ?? '/api';
+  const resposta = await fetch(`${base}/administracao/exportacao.csv?origem=${origem}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!resposta.ok) throw new Error(`Não foi possível exportar (HTTP ${resposta.status}). Verifique sua sessão.`);
+  const url = URL.createObjectURL(await resposta.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `sentempo-${origem.toLowerCase()}.csv`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export async function excluirParticipante(token: string, id: string): Promise<void> {

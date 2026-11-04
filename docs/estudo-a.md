@@ -87,3 +87,83 @@ oficiais ao participante. Não prometer coleta offline ou sincronização poster
 Testar composição, distribuição das ordens, concorrência, retomada, pausas,
 duplicidade, métricas, separação de dados, autorização e migração com dados
 antigos. Índices, locks e migrações devem ser verificados também em PostgreSQL.
+
+## API e retomada
+
+Prefixo `/api/participantes/{participante_id}/estudo-a`:
+
+- GET: sessão atual ou null quando não existe.
+- POST: criar após consentimento e áudio testado, ou retomar a sessão existente.
+  Corpo: `consentimento: true`, `audio_testado: true`, `dispositivo` (COMPUTADOR,
+  CELULAR, TABLET, OUTRO), `usa_fones` booleano, `volume` entre 0.1 e 1.
+- POST `/tentativas/{tentativa_id}`: `resultado_ms`, sem métricas do cliente.
+- POST `/questionario`: tipo TENTATIVA/BLOCO/FINAL e respostas correspondentes.
+- POST `/continuar`: libera o próximo bloco após suas perguntas e a pausa livre.
+
+Situacoes: EM_ANDAMENTO, QUESTIONARIO_TENTATIVA, QUESTIONARIO_BLOCO, INTERVALO,
+QUESTIONARIO_FINAL, CONCLUIDA. Resultados são ocultados até CONCLUIDA. Não há
+endpoint de exclusão de posição do novo estudo. Sessão por participante/versão
+evita recomeçar a coleta inteira ou consumir uma nova ordem ao retomar.
+
+Administração autenticada: GET `/api/administracao/estudo-a?pagina=1&tamanho=10`
+retorna resumo, médias por condição/tempo e sessões com plano e respostas. A
+paginação aceita até 100 sessões. As estatísticas incluem tentativas confirmadas
+de sessões em andamento e completas, informando isso no painel.
+
+CSV: GET `/api/administracao/exportacao.csv?origem=ESTUDO_A`, ou origem ANTERIOR
+(padrão de compatibilidade) e LIVRE. Cada arquivo tem apenas uma origem; o
+cabeçalho identifica a versão. Não exporta nomes nem códigos de acesso. Os
+endpoints antigos de resumo e estatísticas continuam restritos ao protocolo
+anterior, explicitamente identificado na interface.
+
+## Dicionário da base de análise
+
+CSV usa UTF-8 com BOM, separador `;` e ponto decimal. Campos vazios representam
+ausência, não zero. Comentários começando como fórmula de planilha recebem um
+apóstrofo de proteção somente na exportação; o banco mantém o texto original.
+
+| Colunas | Significado |
+| --- | --- |
+| codigo_participante | UUID estável, pseudônimo; diferente do código de acesso |
+| origem, versao_protocolo | Separação entre ANTERIOR, ESTUDO_A e LIVRE |
+| sessao_id, sequencia | UUID da sessão e índice de permutação 0–5 |
+| condicao, tempo_alvo_ms | Condição e alvo em milissegundos |
+| bloco, ordem, repeticao | Bloco 1–3; ordem 1–27; repetição da combinação 1–3 |
+| resultado_ms, erro_ms, erro_absoluto_ms | Valores em ms, três casas decimais |
+| erro_relativo_percentual | Erro assinado dividido pelo alvo, vezes 100 |
+| concluida_em | Momento UTC de confirmação da medição |
+| dispositivo, usa_fones, volume | Contexto declarado e volume relativo configurado |
+| consentido_em, sessao_concluida_em | Início consentido e encerramento após questionário |
+| confianca, confianca_respondida_em | Escala 1–7 e marco de resposta ou recusa |
+| agradabilidade, ansiedade, bloco_respondido_em | Escalas 1–7 do bloco, repetidas em suas linhas |
+| estrategia, comentario | Resposta final e texto opcional |
+
+Quando `*_respondida_em`/`bloco_respondido_em` está preenchido e a resposta está
+vazia, a pessoa escolheu não responder. Sem marco, a pergunta está pendente.
+Estratégia vazia com sessão encerrada também significa recusa.
+
+## Comandos de validação
+
+Backend com Python 3.12 e dependências de `requirements-dev.txt`:
+
+```bash
+cd backend
+pytest -v
+BANCO_TESTES_POSTGRES=postgresql+psycopg://usuario:senha@localhost:5432/banco_exclusivo_testes pytest -v
+```
+
+**BANCO_TESTES_POSTGRES deve apontar exclusivamente para um banco descartável.**
+A suíte cria e remove tabelas; o teste de migração usa ainda um schema temporário.
+Não usar a URL do banco real. O CI provisiona PostgreSQL independente para isso.
+
+```bash
+cd frontend
+npm ci
+npm test
+npm run lint
+npm run build
+```
+
+Para disponibilizar localmente, aplicar `alembic upgrade head` antes de iniciar
+a API. A migração não é aplicada no banco real durante os testes. O Compose já
+executa migrações no script de inicialização do backend.
