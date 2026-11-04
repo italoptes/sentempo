@@ -28,6 +28,7 @@ class TempoPersonalizado(Base):
             "tempo_alvo_ms",
             unique=True,
             postgresql_where=text("ativo = true"),
+            sqlite_where=text("ativo = true"),
         ),
         Index("ix_tempos_personalizados_criado_em", "criado_em"),
     )

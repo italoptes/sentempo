@@ -36,8 +36,8 @@ class RepositorioTentativas:
         self.sessao.execute(comando)
         self.sessao.flush()
 
-    def excluir_uma(self, tentativa_id: uuid.UUID) -> int:
-        comando = delete(Tentativa).where(Tentativa.id == tentativa_id)
+    def excluir_uma(self, participante_id: uuid.UUID, tentativa_id: uuid.UUID) -> int:
+        comando = delete(Tentativa).where(Tentativa.id == tentativa_id, Tentativa.participante_id == participante_id)
         resultado = self.sessao.execute(comando)
         self.sessao.flush()
         return resultado.rowcount

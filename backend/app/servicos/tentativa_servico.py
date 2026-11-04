@@ -79,9 +79,10 @@ class TentativaServico:
         if participante is None:
             raise ParticipanteNaoEncontrado
             
-        # Opcionalmente, pode verificar se a tentativa pertence mesmo ao participante.
-        # Por simplicidade e segurança, podemos checar se apagou algo.
-        apagados = self.tentativas.excluir_uma(tentativa_id)
+        apagados = self.tentativas.excluir_uma(participante_id, tentativa_id)
         if apagados > 0:
             self.sessao.commit()
+        else:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Tentativa não encontrada para este participante")
 

@@ -27,11 +27,11 @@ from app.principal import aplicacao  # noqa: E402
 
 # Motor SQLite em memória compartilhado por conexão (StaticPool garante a mesma base
 # entre diferentes conexões durante os testes, sem arquivo em disco)
-_motor_testes = create_engine(
-    "sqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+_url_testes = os.environ.get("BANCO_TESTES_POSTGRES", "sqlite://")
+_motor_testes = create_engine(_url_testes, **(
+    {"connect_args": {"check_same_thread": False}, "poolclass": StaticPool}
+    if _url_testes.startswith("sqlite") else {}
+))
 _FabricaSessaoTestes = sessionmaker(bind=_motor_testes, autoflush=False, expire_on_commit=False)
 
 
@@ -48,6 +48,8 @@ def _obter_sessao_testes() -> Generator[Session, None, None]:
 def banco_limpo():
     """Cria e destrói todas as tabelas antes e depois de cada teste."""
     Base.metadata.create_all(bind=_motor_testes)
+    from app.nucleo.limitador import limitador
+    limitador.reset()
     # Sobrescreve a dependência de sessão para usar o banco de testes
     aplicacao.dependency_overrides[obter_sessao] = _obter_sessao_testes
     yield

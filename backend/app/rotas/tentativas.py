@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.banco.conexao import obter_sessao
 from app.esquemas.tentativa import TentativaCriacao, TentativaResposta
+from app.nucleo.dependencias import exigir_administrador
 from app.servicos.tentativa_servico import (
     ParticipanteNaoEncontrado,
     TentativaDuplicada,
@@ -41,6 +42,7 @@ async def salvar_tentativa(
 @roteador.delete(
     "/{participante_id}/tentativas",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(exigir_administrador)],
 )
 async def limpar_tentativas(
     participante_id: uuid.UUID,
@@ -55,6 +57,7 @@ async def limpar_tentativas(
 @roteador.delete(
     "/{participante_id}/tentativas/{tentativa_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(exigir_administrador)],
 )
 async def excluir_uma_tentativa(
     participante_id: uuid.UUID,

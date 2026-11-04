@@ -45,6 +45,7 @@ class Tentativa(Base):
             "condicao",
             unique=True,
             postgresql_where=text("tipo_tentativa = 'OFICIAL'"),
+            sqlite_where=text("tipo_tentativa = 'OFICIAL'"),
         ),
         CheckConstraint(
             "(tipo_tentativa = 'OFICIAL' AND tempo_alvo_ms IN (5000, 15000, 30000)) OR (tipo_tentativa = 'PERSONALIZADA' AND tempo_alvo_ms > 0)",
