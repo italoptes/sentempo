@@ -478,11 +478,11 @@ export function Administracao() {
         textoConfirmar="Sim, apagar tudo"
         tipo="perigo"
         onConfirmar={async () => {
-          if (!detalhe) return;
+          if (!detalhe || !token) return;
           setModalZerar(false);
           const { excluirTodas } = await import('../servicos/tentativas');
           try {
-            await excluirTodas(detalhe.participante.id);
+            await excluirTodas(detalhe.participante.id, token);
             void handleDetalhar(detalhe.participante.id);
             void carregarResumo();
             void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
@@ -525,12 +525,12 @@ export function Administracao() {
         textoConfirmar="Sim, excluir"
         tipo="perigo"
         onConfirmar={async () => {
-          if (!tentativaParaExcluir || !detalhe) return;
+          if (!tentativaParaExcluir || !detalhe || !token) return;
           const { participanteId, tentativaId } = tentativaParaExcluir;
           setTentativaParaExcluir(null);
           try {
             const { excluirUma } = await import('../servicos/tentativas');
-            await excluirUma(participanteId, tentativaId);
+            await excluirUma(participanteId, tentativaId, token);
             void handleDetalhar(participanteId);
             void carregarResumo();
             void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);

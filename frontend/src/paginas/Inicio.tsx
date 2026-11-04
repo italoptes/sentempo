@@ -39,7 +39,6 @@ export function Inicio({
   const [erroNovoTempo, setErroNovoTempo] = useState<string | null>(null);
 
   const [tempoParaExcluir, setTempoParaExcluir] = useState<string | null>(null);
-  const [tentativaParaExcluir, setTentativaParaExcluir] = useState<string | null>(null);
   const [tempoParaJogar, setTempoParaJogar] = useState<{ id: string; ms: number } | null>(null);
 
   // Recarrega perfil ao montar (garante progresso atualizado)
@@ -121,6 +120,12 @@ export function Inicio({
       </header>
 
       <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+        <section aria-labelledby="titulo-estudo-a" className="bg-branco rounded-2xl border border-borda-controle p-6 space-y-4">
+          <h1 id="titulo-estudo-a" className="text-xl font-semibold">Estudo de percepção temporal</h1>
+          <p>Uma participação guiada com 27 tentativas e pausas entre três blocos. Você poderá retomar de onde parou.</p>
+          <button type="button" onClick={() => navigate('/estudo-a')} className="min-h-12 rounded-xl px-6 py-3 bg-destaque text-principal font-semibold">Participar ou retomar estudo</button>
+        </section>
+        <h2 className="text-lg font-semibold">Protocolo anterior — desafios de 5, 15 e 30 segundos</h2>
         {/* Progresso */}
         <CartaoProgresso
           nome={participante.nome}
@@ -306,7 +311,6 @@ export function Inicio({
                 {participante.tentativas.length > 0 && (
                   <TabelaResultados
                     tentativas={participante.tentativas}
-                    onExcluir={(id) => setTentativaParaExcluir(id)}
                   />
                 )}
                 {(participante.tentativas_livres?.length ?? 0) > 0 && (
@@ -316,7 +320,6 @@ export function Inicio({
                     </h3>
                     <TabelaResultados
                       tentativas={participante.tentativas_livres}
-                      onExcluir={(id) => setTentativaParaExcluir(id)}
                     />
                   </section>
                 )}
@@ -347,27 +350,6 @@ export function Inicio({
           }
         }}
         onCancelar={() => setTempoParaExcluir(null)}
-      />
-
-      <ModalConfirmacao
-        aberto={tentativaParaExcluir !== null}
-        titulo="Excluir resultado"
-        mensagem="Tem certeza que deseja excluir este resultado?"
-        textoConfirmar="Sim, excluir"
-        tipo="perigo"
-        onConfirmar={async () => {
-          if (!tentativaParaExcluir) return;
-          const id = tentativaParaExcluir;
-          setTentativaParaExcluir(null);
-          try {
-            const { excluirUma } = await import('../servicos/tentativas');
-            await excluirUma(participante.id, id);
-            await onRecarregar();
-          } catch (e) {
-            alert('Erro ao excluir resultado');
-          }
-        }}
-        onCancelar={() => setTentativaParaExcluir(null)}
       />
 
       <ModalConfirmacao

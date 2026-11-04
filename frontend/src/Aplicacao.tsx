@@ -11,6 +11,7 @@ import { PWAModal } from './componentes/PWAModal';
 import { TituloPagina } from './componentes/TituloPagina';
 import { IndicadorCarregamento } from './componentes/IndicadorCarregamento';
 import { GerenciadorFocoRota } from './componentes/GerenciadorFocoRota';
+import { EstudoA } from './paginas/EstudoA';
 
 export function Aplicacao() {
   const {
@@ -70,7 +71,9 @@ export function Aplicacao() {
           }
         />
 
-        {/* Experimento */}
+        <Route path="/estudo-a" element={participanteId ? <EstudoA participanteId={participanteId} /> : <Navigate to="/" replace />} />
+
+        {/* Experimento anterior */}
         <Route
           path="/experimento/:tempo/:condicao"
           element={

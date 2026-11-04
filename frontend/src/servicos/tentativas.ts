@@ -21,14 +21,16 @@ export async function salvarTentativa(
   });
 }
 
-export async function excluirTodas(participanteId: string): Promise<void> {
+export async function excluirTodas(participanteId: string, token: string): Promise<void> {
   return requisicao<void>(`/participantes/${participanteId}/tentativas`, {
     metodo: 'DELETE',
+    token,
   });
 }
 
-export async function excluirUma(participanteId: string, tentativaId: string): Promise<void> {
+export async function excluirUma(participanteId: string, tentativaId: string, token: string): Promise<void> {
   return requisicao<void>(`/participantes/${participanteId}/tentativas/${tentativaId}`, {
     metodo: 'DELETE',
+    token,
   });
 }
