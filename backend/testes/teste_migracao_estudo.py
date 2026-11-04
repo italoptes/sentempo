@@ -6,6 +6,10 @@ import uuid
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.orm import Session
+
+from app.esquemas.estudo import ResultadoEstudo, SessaoCriacao
+from app.servicos.estudo_servico import EstudoServico
 
 
 @pytest.mark.skipif(not os.getenv("BANCO_TESTES_POSTGRES"), reason="Migrações exigem PostgreSQL isolado")
@@ -30,6 +34,13 @@ def test_migracao_preserva_dados_antigos_e_constraints():
             assert banco.scalar(text("SELECT count(*) FROM sessoes_estudo")) == 0
             assert banco.scalar(text("SELECT proxima FROM distribuicoes_protocolos WHERE versao='ESTUDO_A_V1'")) == 0
             assert banco.scalar(text("SELECT count(*) FROM pg_indexes WHERE schemaname=:esquema AND indexname='uq_estudo_sessao_ordem'"), {"esquema": esquema}) == 1
+        with Session(isolado) as banco:
+            servico = EstudoServico(banco)
+            s = servico.criar(pid, SessaoCriacao(consentimento=True, audio_testado=True, dispositivo="CELULAR", usa_fones=False, volume="0.5"))
+            assert len(s.tentativas) == 27
+            assert sum(t.tempo_alvo_ms == 10000 for t in s.tentativas) == 9
+            servico.salvar(pid, s.tentativas[0].id, ResultadoEstudo(resultado_ms="5123.456"))
+            assert servico.resposta(servico.obter(pid)).situacao == "QUESTIONARIO_TENTATIVA"
     finally:
         isolado.dispose()
         with motor.begin() as banco:

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { consultarEstudo, continuarEstudo, criarEstudo, rotularCondicaoEstudo } from '../servicos/estudo';
-import type { ContextoEstudo, SessaoEstudo } from '../servicos/estudo';
+import { consultarEstudo, continuarEstudo, criarEstudo, responderQuestionario, rotularCondicaoEstudo } from '../servicos/estudo';
+import type { ContextoEstudo, RespostaQuestionario, SessaoEstudo } from '../servicos/estudo';
 import { prepararAudioEstudo } from '../utilitarios/audio_estudo';
 import type { AudioEstudo } from '../utilitarios/audio_estudo';
 import { usarRodadaEstudo } from '../ganchos/usarRodadaEstudo';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 import { formatarErro, formatarSegundos } from '../utilitarios/formatacao';
+import { QuestionarioEstudo } from '../componentes/QuestionarioEstudo';
 
 const botao = 'min-h-12 rounded-xl bg-destaque text-principal font-semibold px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -37,7 +38,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
     finally { definirCarregando(false); }
   }, [participanteId]);
   useEffect(() => { void carregar(); }, [carregar]);
-  useEffect(() => { tituloRef.current?.focus(); }, [rodada.estado, sessao?.proxima?.id, sessao?.situacao]);
+  useEffect(() => { tituloRef.current?.focus(); }, [rodada.estado, sessao?.proxima?.id, sessao?.situacao, sessao?.questionario_pendente?.tentativa_id]);
 
   const pararTeste = useCallback(() => {
     versaoTeste.current++;
@@ -91,6 +92,19 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
     catch { await carregar(); }
     finally { definirOcupado(false); }
   }
+  async function responder(resposta: RespostaQuestionario) {
+    if (ocupado) return;
+    definirOcupado(true);
+    try { atualizar(await responderQuestionario(participanteId, resposta)); }
+    catch {
+      // Também trata resposta perdida/duas abas sem sobrescrever questionário salvo.
+      try {
+        const atual = await consultarEstudo(participanteId);
+        if (atual) atualizar(atual);
+        definirErro('Consulte a etapa atual. Se a pergunta continua visível, sua resposta não foi confirmada; tente novamente.');
+      } catch { definirErro('Não foi possível confirmar as respostas. Verifique sua conexão e consulte a sessão.'); }
+    } finally { definirOcupado(false); }
+  }
 
   const ativa = rodada.estado === 'ativa';
   const protegida = ['ativa', 'preparando', 'salvando', 'confirmacao'].includes(rodada.estado);
@@ -134,6 +148,8 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
           </section>
         ) : ativa ? (
           <div className="min-h-[60vh] flex items-center justify-center"><button type="button" className="w-full max-w-sm min-h-24 rounded-2xl bg-destaque text-principal text-2xl font-semibold" onClick={() => void rodada.finalizar()}>Finalizar</button></div>
+        ) : sessao.questionario_pendente ? (
+          <QuestionarioEstudo key={`${sessao.questionario_pendente.tipo}-${sessao.questionario_pendente.tentativa_id ?? sessao.questionario_pendente.bloco ?? 'final'}`} pergunta={sessao.questionario_pendente} ocupado={ocupado} aoConfirmar={responder} />
         ) : sessao.situacao === 'CONCLUIDA' ? (
           <section className="space-y-5"><h2 className="text-xl font-semibold">As 27 tentativas foram concluídas</h2><p>Obrigado por participar. O estudo compara estimativas de duração em silêncio e com dois ritmos de bipes. Diferenças nas respostas não medem diretamente atenção ou concentração e não comprovam, por si, um efeito de nudge.</p>
             <details><summary className="min-h-11 cursor-pointer underline">Ver meus resultados</summary>

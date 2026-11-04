@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.banco.conexao import obter_sessao
-from app.esquemas.estudo import ResultadoEstudo, SessaoCriacao, SessaoResposta
+from app.esquemas.estudo import RespostaQuestionario, ResultadoEstudo, SessaoCriacao, SessaoResposta
 from app.servicos.estudo_servico import ErroEstudo, EstudoServico
 
 roteador = APIRouter(prefix="/participantes/{participante_id}/estudo-a", tags=["estudo-a"])
@@ -38,5 +38,13 @@ def salvar(participante_id: uuid.UUID, tentativa_id: uuid.UUID, dados: Resultado
 def continuar(participante_id: uuid.UUID, banco: Banco):
     try:
         return EstudoServico.resposta(EstudoServico(banco).continuar(participante_id))
+    except ErroEstudo as erro:
+        raise HTTPException(erro.status, erro.mensagem) from erro
+
+
+@roteador.post("/questionario", response_model=SessaoResposta)
+def responder(participante_id: uuid.UUID, dados: RespostaQuestionario, banco: Banco):
+    try:
+        return EstudoServico.resposta(EstudoServico(banco).responder(participante_id, dados))
     except ErroEstudo as erro:
         raise HTTPException(erro.status, erro.mensagem) from erro

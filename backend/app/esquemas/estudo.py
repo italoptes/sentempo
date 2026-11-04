@@ -28,6 +28,8 @@ class PosicaoResposta(BaseModel):
     condicao: str
     tempo_alvo_ms: int
     concluida: bool
+    confianca: int | None = None
+    questionario_respondido: bool = False
     resultado_ms: float | None = None
     erro_ms: float | None = None
     erro_absoluto_ms: float | None = None
@@ -54,7 +56,23 @@ class SessaoResposta(BaseModel):
     bloco_liberado: int
     concluidas: int
     total: int = 27
-    situacao: Literal["EM_ANDAMENTO", "INTERVALO", "CONCLUIDA"]
+    situacao: Literal["EM_ANDAMENTO", "INTERVALO", "CONCLUIDA", "QUESTIONARIO_TENTATIVA", "QUESTIONARIO_BLOCO", "QUESTIONARIO_FINAL"]
     proxima: PosicaoResposta | None
     blocos: list[BlocoResposta]
     tentativas: list[PosicaoResposta]
+    questionario_pendente: dict | None = None
+    respostas_blocos: list[dict] = []
+    estrategia: str | None = None
+    comentario: str | None = None
+
+
+class RespostaQuestionario(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    tipo: Literal["TENTATIVA", "BLOCO", "FINAL"]
+    tentativa_id: uuid.UUID | None = None
+    bloco: int | None = Field(default=None, ge=1, le=3)
+    confianca: int | None = Field(default=None, ge=1, le=7, strict=True)
+    agradabilidade: int | None = Field(default=None, ge=1, le=7, strict=True)
+    ansiedade: int | None = Field(default=None, ge=1, le=7, strict=True)
+    estrategia: Literal["SEM_CONTAGEM", "CONTAGEM_MENTAL", "CONTAGEM_BIPES", "COMBINADA", "OUTRA"] | None = None
+    comentario: str | None = Field(default=None, max_length=300)

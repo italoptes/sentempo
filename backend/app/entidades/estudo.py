@@ -34,7 +34,10 @@ class SessaoEstudo(Base):
     volume: Mapped[Decimal] = mapped_column(Numeric(3, 2), nullable=False)
     consentido_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    estrategia: Mapped[str | None] = mapped_column(String(30))
+    comentario: Mapped[str | None] = mapped_column(String(300))
     tentativas: Mapped[list["TentativaEstudo"]] = relationship(cascade="all, delete-orphan", order_by="TentativaEstudo.ordem")
+    respostas_blocos: Mapped[list["RespostaBloco"]] = relationship(cascade="all, delete-orphan", order_by="RespostaBloco.bloco")
 
 
 class TentativaEstudo(Base):
@@ -46,6 +49,7 @@ class TentativaEstudo(Base):
         CheckConstraint("bloco = 1 + (ordem - 1) / 9", name="ck_estudo_bloco_ordem"),
         CheckConstraint("tempo_alvo_ms IN (5000, 10000, 15000)", name="ck_estudo_tempo"),
         CheckConstraint("condicao IN ('SEM_ESTIMULO', 'LENTO', 'RAPIDO')", name="ck_estudo_condicao"),
+        CheckConstraint("confianca IS NULL OR confianca BETWEEN 1 AND 7", name="ck_estudo_confianca"),
         CheckConstraint(
             "(resultado_ms IS NULL AND erro_ms IS NULL AND erro_absoluto_ms IS NULL AND erro_relativo_percentual IS NULL AND concluida_em IS NULL) OR "
             "(resultado_ms IS NOT NULL AND resultado_ms > 0 AND erro_ms IS NOT NULL AND erro_ms = round(resultado_ms - tempo_alvo_ms, 3) "
@@ -65,3 +69,21 @@ class TentativaEstudo(Base):
     erro_absoluto_ms: Mapped[Decimal | None] = mapped_column(Numeric(18, 3))
     erro_relativo_percentual: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
     concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    confianca: Mapped[int | None] = mapped_column(Integer)
+    respondida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class RespostaBloco(Base):
+    __tablename__ = "respostas_blocos_estudo"
+    __table_args__ = (
+        UniqueConstraint("sessao_id", "bloco", name="uq_resposta_bloco_estudo"),
+        CheckConstraint("bloco BETWEEN 1 AND 3", name="ck_resposta_bloco_posicao"),
+        CheckConstraint("agradabilidade IS NULL OR agradabilidade BETWEEN 1 AND 7", name="ck_resposta_agradabilidade"),
+        CheckConstraint("ansiedade IS NULL OR ansiedade BETWEEN 1 AND 7", name="ck_resposta_ansiedade"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    sessao_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessoes_estudo.id", ondelete="CASCADE"), nullable=False)
+    bloco: Mapped[int] = mapped_column(Integer, nullable=False)
+    agradabilidade: Mapped[int | None] = mapped_column(Integer)
+    ansiedade: Mapped[int | None] = mapped_column(Integer)
+    respondida_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

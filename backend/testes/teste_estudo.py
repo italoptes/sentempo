@@ -61,14 +61,22 @@ def test_fluxo_pausas_duplicidade_metricas_e_resultados_ocultos(cliente, partici
         assert resposta.status_code == 200, resposta.text
         s = resposta.json()
         assert s["concluidas"] == ordem
-        if ordem < 27:
-            assert all(t["resultado_ms"] is None for t in s["tentativas"])
+        assert all(t["resultado_ms"] is None for t in s["tentativas"])
+        assert s["situacao"] == "QUESTIONARIO_TENTATIVA"
+        assert cliente.get(url).json() == s
+        s = cliente.post(url + "/questionario", json={"tipo": "TENTATIVA", "tentativa_id": atual["id"], "confianca": 5}).json()
+        if ordem % 9 == 0:
+            assert s["situacao"] == "QUESTIONARIO_BLOCO"
+            s = cliente.post(url + "/questionario", json={"tipo": "BLOCO", "bloco": ordem // 9, "agradabilidade": 4, "ansiedade": None}).json()
         if ordem in (9, 18):
             assert s["situacao"] == "INTERVALO"
             assert cliente.get(url).json()["situacao"] == "INTERVALO"
             assert cliente.post(url + "/tentativas/" + s["proxima"]["id"], json={"resultado_ms": 5000}).status_code == 409
             s = cliente.post(url + "/continuar").json()
+    assert s["situacao"] == "QUESTIONARIO_FINAL"
+    s = cliente.post(url + "/questionario", json={"tipo": "FINAL", "estrategia": "SEM_CONTAGEM", "comentario": " Sem contagem "}).json()
     assert s["situacao"] == "CONCLUIDA" and s["proxima"] is None
+    assert s["estrategia"] == "SEM_CONTAGEM" and s["comentario"] == "Sem contagem"
     assert cliente.post(url + "/continuar").status_code == 409
     assert cliente.post(url + "/tentativas/" + primeira["id"], json={"resultado_ms": 2000}).status_code == 409
     assert cliente.get(url).json() == s  # Recupera confirmação perdida sem repetir.
@@ -77,6 +85,24 @@ def test_fluxo_pausas_duplicidade_metricas_e_resultados_ocultos(cliente, partici
         assert t["erro_absoluto_ms"] == pytest.approx(123.456)
         assert t["erro_relativo_percentual"] == pytest.approx(100 * 123.456 / t["tempo_alvo_ms"], abs=0.000001)
     assert cliente.get(f"/api/participantes/{participante['id']}").json()["progresso"]["concluidas"] == 0
+
+
+def test_questionario_opcional_retomavel_e_sem_sobrescrita(cliente, participante):
+    url = endereco(participante)
+    s = cliente.post(url, json=DADOS).json()
+    t = s["proxima"]
+    s = cliente.post(url + "/tentativas/" + t["id"], json={"resultado_ms": 5000}).json()
+    assert s["situacao"] == "QUESTIONARIO_TENTATIVA"
+    assert cliente.get(url).json() == s
+    assert cliente.post(url + "/tentativas/" + s["proxima"]["id"], json={"resultado_ms": 5000}).status_code == 409
+    assert cliente.post(url + "/questionario", json={"tipo": "TENTATIVA", "tentativa_id": t["id"], "confianca": 8}).status_code == 422
+    assert cliente.post(url + "/questionario", json={"tipo": "FINAL"}).status_code == 409
+    resposta = {"tipo": "TENTATIVA", "tentativa_id": t["id"], "confianca": None}
+    assert cliente.post(url + "/questionario", json=resposta).status_code == 200
+    assert cliente.post(url + "/questionario", json={**resposta, "confianca": 3}).status_code == 409
+    s = cliente.get(url).json()
+    assert s["tentativas"][0]["questionario_respondido"] is True
+    assert s["tentativas"][0]["confianca"] is None
 
 
 @pytest.mark.parametrize("valor", [0, -1, "NaN", "Infinity", "-Infinity"])
@@ -109,6 +135,17 @@ def test_banco_protege_posicao_e_resultado(cliente, participante):
         t.resultado_ms = Decimal("10")
         with pytest.raises(IntegrityError):
             banco.commit()
+
+
+@pytest.mark.skipif(_motor_testes.dialect.name != "postgresql", reason="Locks concorrentes exigem PostgreSQL")
+def test_balanceamento_concorrente_de_participantes_distintos(cliente):
+    ids = [uuid.UUID(cliente.post("/api/participantes/acessar", json={"nome": f"Pessoa {i}", "codigo": "0042"}).json()["id"]) for i in range(12)]
+    def criar(pid):
+        with _FabricaSessaoTestes() as banco:
+            return EstudoServico(banco).criar(pid, SessaoCriacao(**DADOS)).sequencia
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        sequencias = list(executor.map(criar, ids))
+    assert Counter(sequencias) == {i: 2 for i in range(6)}
 
 
 @pytest.mark.skipif(_motor_testes.dialect.name != "postgresql", reason="Locks concorrentes exigem PostgreSQL")

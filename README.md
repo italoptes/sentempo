@@ -11,8 +11,9 @@ O Estudo A tem 27 tentativas: silêncio, bipes de 60 BPM e bipes de 120 BPM;
 tempos de 5, 10 e 15 segundos; três repetições por combinação. A adaptação da
 proposta de 36 para 27 tentativas remove os bipes acelerados para reduzir duração
 e complexidade, concentrando a comparação em dois ritmos constantes e silêncio.
-Não inclui treinamento nem o Estudo B. O questionário depende de aprovação de
-conteúdo e interface e não deve ser considerado entregue antes disso.
+Não inclui treinamento nem o Estudo B. O questionário aprovado coleta confiança
+por tentativa, agradabilidade/ansiedade por bloco e estratégia ao final, sempre
+com opção de não responder.
 
 ## Especificação histórica — protocolo anterior
 

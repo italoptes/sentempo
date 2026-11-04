@@ -9,6 +9,8 @@ export interface PosicaoEstudo {
   condicao: CondicaoEstudo;
   tempo_alvo_ms: number;
   concluida: boolean;
+  confianca?: number | null;
+  questionario_respondido?: boolean;
   resultado_ms: number | null;
   erro_ms: number | null;
   erro_absoluto_ms: number | null;
@@ -27,10 +29,25 @@ export interface SessaoEstudo {
   bloco_liberado: number;
   concluidas: number;
   total: number;
-  situacao: 'EM_ANDAMENTO' | 'INTERVALO' | 'CONCLUIDA';
+  situacao: 'EM_ANDAMENTO' | 'INTERVALO' | 'CONCLUIDA' | 'QUESTIONARIO_TENTATIVA' | 'QUESTIONARIO_BLOCO' | 'QUESTIONARIO_FINAL';
   proxima: PosicaoEstudo | null;
   blocos: { posicao: number; condicao: CondicaoEstudo; concluidas: number; total: number }[];
   tentativas: PosicaoEstudo[];
+  questionario_pendente: PerguntaPendente | null;
+  respostas_blocos: { bloco: number; agradabilidade: number | null; ansiedade: number | null }[];
+  estrategia: string | null;
+  comentario: string | null;
+}
+export interface PerguntaPendente { tipo: 'TENTATIVA' | 'BLOCO' | 'FINAL'; tentativa_id?: string; ordem?: number; bloco?: number }
+export interface RespostaQuestionario {
+  tipo: PerguntaPendente['tipo'];
+  tentativa_id?: string;
+  bloco?: number;
+  confianca?: number | null;
+  agradabilidade?: number | null;
+  ansiedade?: number | null;
+  estrategia?: string | null;
+  comentario?: string | null;
 }
 export interface ContextoEstudo {
   consentimento: true;
@@ -45,5 +62,7 @@ export const criarEstudo = (id: string, dados: ContextoEstudo) => requisicao<Ses
 export const continuarEstudo = (id: string) => requisicao<SessaoEstudo>(`${caminho(id)}/continuar`, { metodo: 'POST' });
 export const salvarResultadoEstudo = (id: string, tentativaId: string, resultadoMs: number) =>
   requisicao<SessaoEstudo>(`${caminho(id)}/tentativas/${tentativaId}`, { metodo: 'POST', corpo: { resultado_ms: resultadoMs } });
+export const responderQuestionario = (id: string, resposta: RespostaQuestionario) =>
+  requisicao<SessaoEstudo>(`${caminho(id)}/questionario`, { metodo: 'POST', corpo: resposta });
 
 export const rotularCondicaoEstudo = (condicao: string) => ({ SEM_ESTIMULO: 'Silêncio', LENTO: 'Bipes lentos (60 BPM)', RAPIDO: 'Bipes rápidos (120 BPM)' })[condicao] ?? condicao;

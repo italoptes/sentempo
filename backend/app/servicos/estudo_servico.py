@@ -9,9 +9,9 @@ from sqlalchemy.dialects.postgresql import insert as inserir_postgres
 from sqlalchemy.dialects.sqlite import insert as inserir_sqlite
 from sqlalchemy.orm import Session, selectinload
 
-from app.entidades.estudo import DistribuicaoProtocolo, SessaoEstudo, TentativaEstudo
+from app.entidades.estudo import DistribuicaoProtocolo, RespostaBloco, SessaoEstudo, TentativaEstudo
 from app.entidades.participante import Participante
-from app.esquemas.estudo import BlocoResposta, PosicaoResposta, ResultadoEstudo, SessaoCriacao, SessaoResposta
+from app.esquemas.estudo import BlocoResposta, PosicaoResposta, RespostaQuestionario, ResultadoEstudo, SessaoCriacao, SessaoResposta
 
 VERSAO = "ESTUDO_A_V1"
 SEQUENCIAS = tuple(permutations(("SEM_ESTIMULO", "LENTO", "RAPIDO")))
@@ -30,7 +30,7 @@ class EstudoServico:
     def obter(self, participante_id: uuid.UUID, bloquear: bool = False) -> SessaoEstudo | None:
         consulta = select(SessaoEstudo).where(
             SessaoEstudo.participante_id == participante_id, SessaoEstudo.versao_protocolo == VERSAO
-        ).options(selectinload(SessaoEstudo.tentativas)).execution_options(populate_existing=True)
+        ).options(selectinload(SessaoEstudo.tentativas), selectinload(SessaoEstudo.respostas_blocos)).execution_options(populate_existing=True)
         if bloquear:
             consulta = consulta.with_for_update()
         return self.banco.scalar(consulta)
@@ -75,6 +75,8 @@ class EstudoServico:
 
     def salvar(self, participante_id: uuid.UUID, tentativa_id: uuid.UUID, dados: ResultadoEstudo) -> SessaoEstudo:
         sessao = self.exigir(participante_id)
+        if self.pendente(sessao):
+            raise ErroEstudo(409, "Responda ou pule o questionário pendente antes da próxima tentativa")
         proxima = next((t for t in sessao.tentativas if t.resultado_ms is None), None)
         if proxima is None or proxima.id != tentativa_id:
             raise ErroEstudo(409, "Tentativa já confirmada ou fora da sequência. Consulte a sessão.")
@@ -95,13 +97,13 @@ class EstudoServico:
         if alteradas != 1:
             self.banco.rollback()
             raise ErroEstudo(409, "Tentativa já confirmada. Consulte a sessão.")
-        if proxima.ordem == 27:
-            sessao.concluida_em = agora
         self.banco.commit()
         return self.obter(participante_id)
 
     def continuar(self, participante_id: uuid.UUID) -> SessaoEstudo:
         sessao = self.exigir(participante_id)
+        if self.pendente(sessao):
+            raise ErroEstudo(409, "Há um questionário pendente")
         proxima = next((t for t in sessao.tentativas if t.resultado_ms is None), None)
         if proxima is None or proxima.bloco != sessao.bloco_liberado + 1:
             raise ErroEstudo(409, "Não há próximo bloco aguardando continuação")
@@ -110,18 +112,61 @@ class EstudoServico:
         return self.obter(participante_id)
 
     @staticmethod
+    def pendente(sessao: SessaoEstudo) -> dict | None:
+        blocos_respondidos = {r.bloco for r in sessao.respostas_blocos}
+        for t in sorted(sessao.tentativas, key=lambda t: t.ordem):
+            if t.resultado_ms is None:
+                return None
+            if t.respondida_em is None:
+                return {"tipo": "TENTATIVA", "tentativa_id": str(t.id), "ordem": t.ordem}
+            if t.ordem % 9 == 0 and t.bloco not in blocos_respondidos:
+                return {"tipo": "BLOCO", "bloco": t.bloco}
+        if sessao.concluida_em is None:
+            return {"tipo": "FINAL"}
+        return None
+
+    def responder(self, participante_id: uuid.UUID, dados: RespostaQuestionario) -> SessaoEstudo:
+        sessao = self.exigir(participante_id)
+        pendente = self.pendente(sessao)
+        if not pendente or pendente["tipo"] != dados.tipo:
+            raise ErroEstudo(409, "Questionário já confirmado ou fora da sequência. Consulte a sessão.")
+        agora = datetime.now(timezone.utc)
+        if dados.tipo == "TENTATIVA":
+            if str(dados.tentativa_id) != pendente["tentativa_id"]:
+                raise ErroEstudo(409, "Esta pergunta pertence a outra tentativa")
+            tentativa = next(t for t in sessao.tentativas if t.id == dados.tentativa_id)
+            tentativa.confianca = dados.confianca
+            tentativa.respondida_em = agora
+        elif dados.tipo == "BLOCO":
+            if dados.bloco != pendente["bloco"]:
+                raise ErroEstudo(409, "Esta pergunta pertence a outro bloco")
+            sessao.respostas_blocos.append(RespostaBloco(bloco=dados.bloco,
+                agradabilidade=dados.agradabilidade, ansiedade=dados.ansiedade, respondida_em=agora))
+        else:
+            sessao.estrategia = dados.estrategia
+            sessao.comentario = dados.comentario.strip() if dados.comentario else None
+            sessao.concluida_em = agora
+        self.banco.commit()
+        return self.obter(participante_id)
+
+    @staticmethod
     def resposta(sessao: SessaoEstudo, administrativo: bool = False) -> SessaoResposta:
         revelar = administrativo or sessao.concluida_em is not None
+        pendente = EstudoServico.pendente(sessao)
         posicoes = [PosicaoResposta(id=t.id, ordem=t.ordem, bloco=t.bloco, repeticao=t.repeticao,
             condicao=t.condicao, tempo_alvo_ms=t.tempo_alvo_ms, concluida=t.resultado_ms is not None,
+            confianca=t.confianca, questionario_respondido=t.respondida_em is not None,
             **({campo: getattr(t, campo) for campo in ("resultado_ms", "erro_ms", "erro_absoluto_ms", "erro_relativo_percentual")} if revelar else {}))
             for t in sorted(sessao.tentativas, key=lambda t: t.ordem)]
         proxima = next((t for t in posicoes if not t.concluida), None)
-        situacao = "CONCLUIDA" if proxima is None else "INTERVALO" if proxima.bloco > sessao.bloco_liberado else "EM_ANDAMENTO"
+        situacao = ("QUESTIONARIO_" + pendente["tipo"]) if pendente else "CONCLUIDA" if proxima is None else "INTERVALO" if proxima.bloco > sessao.bloco_liberado else "EM_ANDAMENTO"
         return SessaoResposta(id=sessao.id, versao_protocolo=sessao.versao_protocolo, sequencia=sessao.sequencia,
             ordem_condicoes=list(SEQUENCIAS[sessao.sequencia]), dispositivo=sessao.dispositivo,
             usa_fones=sessao.usa_fones, volume=sessao.volume, consentido_em=sessao.consentido_em,
             concluida_em=sessao.concluida_em, bloco_liberado=sessao.bloco_liberado,
             concluidas=sum(t.concluida for t in posicoes), situacao=situacao, proxima=proxima,
             blocos=[BlocoResposta(posicao=i, condicao=condicao, concluidas=sum(t.concluida and t.bloco == i for t in posicoes))
-                    for i, condicao in enumerate(SEQUENCIAS[sessao.sequencia], 1)], tentativas=posicoes)
+                    for i, condicao in enumerate(SEQUENCIAS[sessao.sequencia], 1)], tentativas=posicoes,
+            questionario_pendente=pendente,
+            respostas_blocos=[{"bloco": r.bloco, "agradabilidade": r.agradabilidade, "ansiedade": r.ansiedade} for r in sessao.respostas_blocos],
+            estrategia=sessao.estrategia, comentario=sessao.comentario)

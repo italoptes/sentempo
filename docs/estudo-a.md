@@ -54,13 +54,22 @@ tentativas. Administração e exportação identificam explicitamente protocolo
 anterior, Estudo A e modo livre; a exportação usa UUID do participante como
 pseudônimo, sem nome nem código de acesso de quatro dígitos.
 
-## Questionário pendente
+## Questionário aprovado
 
-Conteúdo e interface requerem aprovação específica antes da implementação.
-Direção: confiança por tentativa; agradabilidade e ansiedade por bloco;
-estratégia de contagem ao final. Definir perguntas, escalas, alternativas e
-momentos concretos sem aumentar a fadiga desnecessariamente. Não coletar dados
-reais antes de concluir essa etapa e executar o piloto.
+O usuário aprovou o conteúdo antes da implementação. Após cada tentativa:
+“Quão confiante você está de que finalizou próximo do tempo-alvo?”, escala 1
+(Nada confiante) a 7 (Muito confiante). Após cada bloco, antes da pausa ou
+encerramento: “Quão agradável foi realizar este bloco?”, 1 (Muito desagradável)
+a 7 (Muito agradável), e “Quanta ansiedade você sentiu durante este bloco?”,
+1 (Nenhuma) a 7 (Muita). Ao final: “Qual estratégia você utilizou na maior parte
+das tentativas?”: Estimei sem contar, Contei mentalmente, Usei os bipes para
+contar, Combinei estratégias ou Outra; comentário opcional até 300 caracteres.
+
+Todas oferecem “Prefiro não responder”, registrado como NULL com um marco de
+preenchimento, nunca zero. Uma etapa pendente é retomada antes da próxima
+tentativa/pausa. O questionário não revela duração nem erro. Não incluímos
+esforço ou rapidez percebida para limitar a fadiga. Executar piloto antes da
+coleta real. A sessão encerra após o questionário final (inclusive se pulado).
 
 ## Preservação e operação
 
