@@ -33,6 +33,7 @@ def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, toke
     assert painel["sessoes_total"] == 1 and painel["tentativas_concluidas"] == 1
     assert painel["versao_protocolo"] == "ESTUDO_A_V2"
     assert painel["sessoes"][0]["total"] == 9
+    assert painel["sessoes"][0]["nome_participante"] == "Ana Silva"
     assert painel["estatisticas"][0]["erro_medio_ms"] == -100
     assert painel["sessoes"][0]["tentativas"][0]["resultado_ms"] == t["tempo_alvo_ms"] - 100
     assert cliente.get("/api/administracao/modo-livre").status_code in (401, 403)

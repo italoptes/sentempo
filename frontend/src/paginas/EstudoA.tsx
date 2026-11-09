@@ -4,7 +4,7 @@ import { consultarEstudo, continuarEstudo, criarEstudo, responderQuestionario } 
 import type { ContextoEstudo, RespostaQuestionario, SessaoEstudo } from '../servicos/estudo';
 import { prepararAudioEstudo } from '../utilitarios/audio_estudo';
 import type { AudioEstudo } from '../utilitarios/audio_estudo';
-import { usarRodadaEstudo } from '../ganchos/usarRodadaEstudo';
+import { DURACAO_PREPARACAO_MS, usarRodadaEstudo } from '../ganchos/usarRodadaEstudo';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 import { QuestionarioEstudo } from '../componentes/QuestionarioEstudo';
 import { ResultadosEstudo } from '../componentes/ResultadosEstudo';
@@ -115,7 +115,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
   const ativa = rodada.estado === 'ativa';
   const totalBlocoAtual = sessao?.blocos.find(b => b.posicao === sessao.proxima?.bloco)?.total
     ?? (sessao ? sessao.total / sessao.ordem_condicoes.length : 3);
-  const protegida = ['ativa', 'preparando', 'salvando', 'confirmacao'].includes(rodada.estado);
+  const protegida = ['ativa', 'preparando', 'preparacao', 'salvando', 'confirmacao'].includes(rodada.estado);
   return (
     <div className={`min-h-screen ${ativa ? 'bg-principal text-branco' : 'bg-fundo text-principal'}`}>
       <main id="conteudo-principal" tabIndex={-1} className={`max-w-2xl mx-auto px-5 py-10 space-y-6 ${(!sessao && consultaConfirmada) || sessao?.situacao === 'CONCLUIDA' ? 'lg:max-w-6xl lg:px-8 lg:py-12' : ''}`}>
@@ -152,6 +152,11 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
           </section>
         ) : rodada.estado === 'preparando' || rodada.estado === 'salvando' ? (
           <p role="status">{rodada.estado === 'preparando' ? 'Preparando áudio...' : 'Confirmando salvamento...'}</p>
+        ) : rodada.estado === 'preparacao' ? (
+          <section className="min-h-[60vh] flex flex-col items-center justify-center gap-6" aria-label="Preparação da tentativa">
+            <p className="text-lg font-medium">Prepare-se. A tentativa vai começar.</p>
+            <IndicadorCarregamento mensagem="Iniciando..." variante="barra" duracaoMs={DURACAO_PREPARACAO_MS} />
+          </section>
         ) : rodada.estado === 'confirmacao' ? (
           <section className="space-y-4"><p role="alert">{rodada.erro}</p><button className={botao} disabled={rodada.consultando} onClick={() => void rodada.verificarConfirmacao()}>Consultar confirmação</button></section>
         ) : rodada.estado === 'interrompida' ? (

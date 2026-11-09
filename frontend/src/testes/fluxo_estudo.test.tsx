@@ -31,7 +31,9 @@ it('informa alvo antes de iniciar e o oculta durante a medição e questionário
   montar();
   expect(await screen.findByRole('heading', { name: 'Estime 10 segundos' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Iniciar tentativa' }));
-  const finalizar = await screen.findByRole('button', { name: 'Finalizar' });
+  expect(await screen.findByText('Prepare-se. A tentativa vai começar.')).toBeTruthy();
+  expect(screen.getByRole('progressbar', { name: 'Iniciando...' })).toBeTruthy();
+  const finalizar = await screen.findByRole('button', { name: 'Finalizar' }, { timeout: 4000 });
   expect(screen.queryByText(/Estime 10 segundos/)).toBeNull();
   expect(screen.queryByText(/de 9/)).toBeNull();
   expect(screen.queryByRole('progressbar')).toBeNull();

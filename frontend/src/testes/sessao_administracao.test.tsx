@@ -6,12 +6,12 @@ import { sessaoResultados } from './dados_resultados';
 afterEach(cleanup);
 
 it('agrupa as tentativas e respostas por bloco e mantém os identificadores disponíveis', () => {
-  render(<SessaoAdministracao sessao={{ ...sessaoResultados, codigo_participante: 'participante-completo',
+  render(<SessaoAdministracao sessao={{ ...sessaoResultados, codigo_participante: 'participante-completo', nome_participante: 'Ana Silva',
     estrategia: 'CONTAGEM_MENTAL', comentario: 'Usei uma contagem constante.',
     respostas_blocos: [{ bloco: 1, agradabilidade: 4, ansiedade: 2 }],
     tentativas: sessaoResultados.tentativas.map(t => ({ ...t, questionario_respondido: true, confianca: 6 })),
   }} />);
-  fireEvent.click(screen.getByText('Participante particip'));
+  fireEvent.click(screen.getByText('Participante Ana Silva'));
   const primeiroBloco = within(screen.getByRole('region', { name: 'Bloco 1' }));
   expect(primeiroBloco.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
   expect(primeiroBloco.getByRole('columnheader', { name: 'Erro absoluto' })).toBeTruthy();
@@ -28,7 +28,7 @@ it('agrupa as tentativas e respostas por bloco e mantém os identificadores disp
 });
 
 it('distingue resultado pendente, resposta omitida e valor zero', () => {
-  render(<SessaoAdministracao sessao={{ ...sessaoResultados, codigo_participante: 'participante-completo',
+  render(<SessaoAdministracao sessao={{ ...sessaoResultados, codigo_participante: 'participante-completo', nome_participante: 'Ana Silva',
     concluida_em: null, situacao: 'EM_ANDAMENTO',
     respostas_blocos: [{ bloco: 1, agradabilidade: null, ansiedade: 7 }],
     tentativas: [
@@ -36,7 +36,7 @@ it('distingue resultado pendente, resposta omitida e valor zero', () => {
       { ...sessaoResultados.tentativas[1], concluida: false, resultado_ms: null, erro_ms: null, erro_absoluto_ms: null, erro_relativo_percentual: null, questionario_respondido: false },
     ],
   }} />);
-  fireEvent.click(screen.getByText('Participante particip'));
+  fireEvent.click(screen.getByText('Participante Ana Silva'));
   const bloco = within(screen.getByRole('region', { name: 'Bloco 1' }));
   expect(bloco.getByText('+0,000 s')).toBeTruthy();
   expect(bloco.getByText('0,000%')).toBeTruthy();

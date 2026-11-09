@@ -3,7 +3,7 @@ import type { PosicaoEstudo, SessaoEstudo } from '../servicos/estudo';
 import { rotularCondicaoEstudo } from '../servicos/estudo';
 import { formatarData, formatarErro, formatarErroAbsoluto, formatarSegundos } from '../utilitarios/formatacao';
 
-type SessaoAdministrativa = SessaoEstudo & { codigo_participante: string };
+type SessaoAdministrativa = SessaoEstudo & { codigo_participante: string; nome_participante: string };
 
 const situacoes: Record<SessaoEstudo['situacao'], string> = {
   CONCLUIDA: 'Concluída', EM_ANDAMENTO: 'Em andamento', INTERVALO: 'Em intervalo',
@@ -38,7 +38,7 @@ export function SessaoAdministracao({ sessao: s }: { sessao: SessaoAdministrativ
   return <details className="group/sessao">
     <summary className="cursor-pointer p-4 text-sm leading-6 sm:p-5">
       <span className="inline-flex w-[calc(100%-1.5rem)] flex-wrap items-center justify-between gap-2 align-middle">
-        <span className="font-semibold" title={s.codigo_participante}>Participante {s.codigo_participante.slice(0, 8)}</span>
+        <span className="font-semibold">Participante {s.nome_participante}</span>
         <span className="flex flex-wrap items-center gap-3"><span className="text-texto-secundario">{s.concluidas}/{s.total} tentativas</span><span className={`rounded-full px-3 py-1 text-xs font-medium ${s.concluida_em ? 'bg-destaque-claro/50' : 'bg-fundo'}`}>{situacoes[s.situacao]}</span></span>
       </span>
     </summary>

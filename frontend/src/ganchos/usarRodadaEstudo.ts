@@ -4,7 +4,9 @@ import type { PosicaoEstudo, SessaoEstudo } from '../servicos/estudo';
 import { prepararAudioEstudo } from '../utilitarios/audio_estudo';
 import type { AudioEstudo } from '../utilitarios/audio_estudo';
 
-export type EstadoEstudo = 'pronta' | 'preparando' | 'ativa' | 'interrompida' | 'salvando' | 'confirmacao';
+export type EstadoEstudo = 'pronta' | 'preparando' | 'preparacao' | 'ativa' | 'interrompida' | 'salvando' | 'confirmacao';
+
+export const DURACAO_PREPARACAO_MS = 1000;
 
 export function usarRodadaEstudo(participanteId: string, aoAtualizar: (sessao: SessaoEstudo) => void) {
   const [estado, definirEstado] = useState<EstadoEstudo>('pronta');
@@ -14,6 +16,7 @@ export function usarRodadaEstudo(participanteId: string, aoAtualizar: (sessao: S
   const operacao = useRef(0);
   const montado = useRef(true);
   const inicio = useRef<number | null>(null);
+  const timerPreparacao = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audio = useRef<AudioEstudo | null>(null);
   const alvo = useRef<PosicaoEstudo | null>(null);
 
@@ -24,11 +27,13 @@ export function usarRodadaEstudo(participanteId: string, aoAtualizar: (sessao: S
   const parar = useCallback(() => {
     operacao.current++;
     inicio.current = null;
+    if (timerPreparacao.current !== null) clearTimeout(timerPreparacao.current);
+    timerPreparacao.current = null;
     audio.current?.parar();
     audio.current = null;
   }, []);
   const interromper = useCallback(() => {
-    if (!['ativa', 'preparando'].includes(estadoRef.current)) return;
+    if (!['ativa', 'preparando', 'preparacao'].includes(estadoRef.current)) return;
     parar();
     mudar('interrompida');
   }, [mudar, parar]);
@@ -57,7 +62,12 @@ export function usarRodadaEstudo(participanteId: string, aoAtualizar: (sessao: S
       if (numero !== operacao.current || !montado.current) { controle.parar(); return; }
       audio.current = controle;
       if (document.hidden) { interromper(); return; }
-      mudar('ativa');
+      mudar('preparacao');
+      timerPreparacao.current = setTimeout(() => {
+        timerPreparacao.current = null;
+        if (numero !== operacao.current || !montado.current || document.hidden) return;
+        mudar('ativa');
+      }, DURACAO_PREPARACAO_MS);
     } catch {
       if (numero !== operacao.current || !montado.current) return;
       interromper();

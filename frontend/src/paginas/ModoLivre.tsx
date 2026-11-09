@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { criarTempoPersonalizado, excluirTempoPersonalizado, obterStatusModoLivre } from '../servicos/modo_livre';
 import type { ParticipanteDetalhe } from '../tipos/participante';
 import type { ContextoModoLivre } from '../componentes/AcessoModoLivre';
@@ -7,6 +7,7 @@ import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { SeletorCondicao } from '../componentes/SeletorCondicao';
 import { ErroAPI } from '../servicos/api';
+import { BarraSuperior } from '../componentes/BarraSuperior';
 
 const TEMPOS_CLASSICOS = [5000, 10000, 15000];
 
@@ -87,8 +88,8 @@ export function ModoLivre({ participante, onRecarregar }: Props) {
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
+      <BarraSuperior contexto="Modo livre" nome={participante.nome} acao="Voltar ao perfil" destino="/inicio" />
       <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-8 lg:max-w-6xl lg:px-8 lg:py-12">
-        <Link to="/inicio" className="inline-flex min-h-11 items-center underline">Voltar ao início</Link>
         <div className="space-y-3">
           <p className="text-sm font-semibold text-principal">Desbloqueado · agora é hora de brincar</p>
           <h1 className="text-2xl font-semibold lg:text-3xl">Modo livre</h1>

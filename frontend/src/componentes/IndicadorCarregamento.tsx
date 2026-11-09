@@ -41,7 +41,14 @@ export function IndicadorCarregamento({ mensagem, compacto = false, temaEscuro =
       {variante === 'anel' && <Ring className={compacto ? 'size-4 shrink-0' : 'size-7 shrink-0'} />}
       <span>{mensagem}</span>
       {variante === 'barra' && (
-        <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-full bg-destaque-claro/20">
+        <div
+          role="progressbar"
+          aria-label={mensagem}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progresso}
+          className="h-2 w-full overflow-hidden rounded-full bg-destaque-claro/20"
+        >
           <div
             className="h-full rounded-full bg-destaque"
             style={{

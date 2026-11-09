@@ -11,6 +11,7 @@ import { Ring } from '../componentes/loading-ui/Ring';
 import { AdministracaoEstudo } from '../componentes/AdministracaoEstudo';
 import { AdministracaoLivre } from '../componentes/AdministracaoLivre';
 import { baixarCSV } from '../servicos/administracao';
+import { BarraSuperior } from '../componentes/BarraSuperior';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 function TelaLogin({
@@ -167,24 +168,7 @@ export function Administracao() {
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
-      {/* Cabeçalho */}
-      <header className="bg-principal shadow-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 lg:px-8 lg:py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo_principal.png" alt="Sentempo" className="h-8 object-contain brightness-0 invert" />
-            <span className="hidden sm:block border-l border-destaque-claro/30 pl-3 text-destaque-claro text-sm">Administração</span>
-          </div>
-          <button
-            id="btn-sair-admin"
-            type="button"
-            onClick={sair}
-            className="text-sm text-destaque-claro hover:text-branco transition-colors
-              focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
-          >
-            Sair
-          </button>
-        </div>
-      </header>
+      <BarraSuperior contexto="Painel administrativo" nome="Administrador" acao="Sair" aoAcionar={sair} />
 
       <main id="conteudo-principal" tabIndex={-1} className="max-w-6xl mx-auto px-4 py-6 space-y-6 lg:px-8 lg:py-8">
         <div className="space-y-2">

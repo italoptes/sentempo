@@ -14,7 +14,7 @@ interface PainelEstudo {
   tentativas_concluidas: number;
   pagina: number;
   total_paginas: number;
-  sessoes: (SessaoEstudo & { codigo_participante: string })[];
+  sessoes: (SessaoEstudo & { codigo_participante: string; nome_participante: string })[];
   estatisticas: { condicao: string; tempo_alvo_ms: number; quantidade: number; erro_medio_ms: number;
     erro_absoluto_medio_ms: number; erro_relativo_medio_percentual: number; abaixo: number; acima: number; igual: number }[];
 }
@@ -44,14 +44,19 @@ export function AdministracaoEstudo({ token, versao = 'ESTUDO_A_V2' }: { token: 
       <MetricasAdministracao itens={[
         ['Sessões iniciadas', painel.sessoes_total], ['Sessões completas', painel.sessoes_completas], ['Tentativas confirmadas', painel.tentativas_concluidas],
       ]} />
-      {painel.estatisticas.length ? <div className="overflow-x-auto rounded-2xl border border-destaque-claro bg-branco">
-        <table className="w-full text-sm whitespace-nowrap"><caption className="text-left font-semibold p-4"><span className="block text-xs font-normal text-texto-secundario mb-1">Médias de todas as tentativas confirmadas</span>Resultados por condição e tempo</caption>
+      {painel.estatisticas.length ? <details className="overflow-hidden rounded-2xl border border-destaque-claro bg-branco">
+        <summary className="cursor-pointer px-4 py-4 font-semibold marker:text-destaque">
+          <span className="block text-xs font-normal text-texto-secundario mb-1">Médias de todas as tentativas confirmadas</span>
+          Resultados por condição e tempo
+          <span className="ml-2 text-sm font-normal text-texto-secundario">Clique para abrir ou recolher</span>
+        </summary>
+        <div className="overflow-x-auto border-t border-destaque-claro"><table className="w-full text-sm whitespace-nowrap"><caption className="sr-only">Resultados por condição e tempo</caption>
           <thead><tr>{['Condição', 'Alvo', 'Tentativas', 'Erro médio', 'Erro absoluto médio', 'Erro relativo médio', 'Abaixo / acima / igual'].map(t => <th scope="col" key={t} className="text-left p-3 bg-destaque-claro">{t}</th>)}</tr></thead>
           <tbody>{painel.estatisticas.map(e => <tr key={`${e.condicao}-${e.tempo_alvo_ms}`} className="border-b border-destaque-claro">
             <td className="p-3">{rotularCondicaoEstudo(e.condicao)}</td><td className="p-3">{e.tempo_alvo_ms / 1000} s</td><td className="p-3">{e.quantidade}</td><td className="p-3">{formatarErro(e.erro_medio_ms)}</td><td className="p-3">{formatarSegundos(e.erro_absoluto_medio_ms)}</td><td className="p-3">{e.erro_relativo_medio_percentual.toFixed(3)}%</td><td className="p-3">{e.abaixo} / {e.acima} / {e.igual}</td>
           </tr>)}</tbody>
-        </table>
-      </div> : <p className="rounded-2xl border border-destaque-claro bg-branco p-6 text-texto-secundario">Nenhuma tentativa confirmada no Estudo A.</p>}
+        </table></div>
+      </details> : <p className="rounded-2xl border border-destaque-claro bg-branco p-6 text-texto-secundario">Nenhuma tentativa confirmada no Estudo A.</p>}
       <div className="space-y-1 pt-2"><h3 className="text-lg font-semibold">Sessões e questionários</h3><p className="text-sm text-texto-secundario">Abra uma sessão para consultar as tentativas e respostas.</p></div>
       {painel.sessoes.length === 0 && <p className="text-sm text-texto-secundario">Nenhuma sessão iniciada nesta versão.</p>}
       {painel.sessoes.length > 0 && <div className="divide-y divide-destaque-claro overflow-hidden rounded-2xl border border-destaque-claro bg-branco">

@@ -2,6 +2,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.entidades.estudo import SessaoEstudo, TentativaEstudo
+from app.entidades.participante import Participante
 from app.servicos.estudo_servico import EstudoServico, VERSAO
 
 
@@ -25,10 +26,12 @@ class RelatorioEstudoServico:
         estatisticas = [{"condicao": l[0], "tempo_alvo_ms": l[1], "quantidade": l[2],
             "erro_medio_ms": float(l[3]), "erro_absoluto_medio_ms": float(l[4]), "erro_relativo_medio_percentual": float(l[5]),
             "abaixo": l[6], "acima": l[7], "igual": l[8]} for l in linhas]
-        sessoes = self.banco.scalars(select(SessaoEstudo).where(SessaoEstudo.versao_protocolo == versao)
+        sessoes = self.banco.execute(select(SessaoEstudo, Participante.nome).join(Participante, SessaoEstudo.participante_id == Participante.id)
+            .where(SessaoEstudo.versao_protocolo == versao)
             .options(selectinload(SessaoEstudo.tentativas), selectinload(SessaoEstudo.respostas_blocos))
             .order_by(SessaoEstudo.consentido_em.desc(), SessaoEstudo.id).offset((pagina - 1) * tamanho).limit(tamanho)).all()
         return {"versao_protocolo": versao, "sessoes_total": sessoes_total, "sessoes_completas": sessoes_completas,
             "tentativas_concluidas": sum(e["quantidade"] for e in estatisticas), "estatisticas": estatisticas,
             "pagina": pagina, "tamanho": tamanho, "total_paginas": (sessoes_total + tamanho - 1) // tamanho,
-            "sessoes": [{"codigo_participante": str(s.participante_id), **EstudoServico.resposta(s, administrativo=True).model_dump(mode="json")} for s in sessoes]}
+            "sessoes": [{"codigo_participante": str(s.participante_id), "nome_participante": nome,
+                **EstudoServico.resposta(s, administrativo=True).model_dump(mode="json")} for s, nome in sessoes]}

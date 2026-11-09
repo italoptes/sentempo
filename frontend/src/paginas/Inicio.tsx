@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { ParticipanteDetalhe } from '../tipos/participante';
 import type { ModoLivreStatus } from '../servicos/modo_livre';
+import { BarraSuperior } from '../componentes/BarraSuperior';
 
 interface Props {
   participante: ParticipanteDetalhe;
@@ -12,7 +13,7 @@ interface Props {
   onRecarregar: () => Promise<void>;
 }
 
-export function Inicio({ modoLivre, onSair, onRecarregar }: Props) {
+export function Inicio({ participante, modoLivre, onSair, onRecarregar }: Props) {
   useEffect(() => { void onRecarregar(); }, [onRecarregar]);
   const liberado = modoLivre?.desbloqueado === true;
   const cartao = 'bg-branco rounded-2xl border border-borda-controle p-6 space-y-4 lg:aspect-square lg:min-w-0 lg:flex lg:flex-col lg:items-start lg:gap-4 lg:space-y-0 lg:p-6 xl:p-8';
@@ -20,14 +21,7 @@ export function Inicio({ modoLivre, onSair, onRecarregar }: Props) {
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
-      <header className="bg-principal shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 lg:max-w-6xl lg:px-8 lg:py-5 flex items-center justify-between gap-4">
-          <img src="/images/logo_principal.png" alt="Sentempo" className="h-8 object-contain brightness-0 invert" />
-          <button id="btn-sair" type="button" onClick={onSair} className="text-sm text-destaque-claro hover:text-branco transition-colors rounded px-2 py-1">
-            Sair do perfil
-          </button>
-        </div>
-      </header>
+      <BarraSuperior contexto="Pesquisa de percepção temporal" nome={participante.nome} acao="Sair do perfil" aoAcionar={onSair} />
       <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-6 lg:max-w-6xl lg:px-8 lg:py-12 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
         <section aria-labelledby="titulo-estudo-a" className={cartao}>
           <p className="text-sm font-semibold text-texto-secundario">{liberado ? 'Pesquisa concluída' : 'Participe da pesquisa'}</p>

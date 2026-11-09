@@ -8,6 +8,7 @@ import { BotaoFinalizar } from '../componentes/BotaoFinalizar';
 import { rotularTempo, rotularCondicao } from '../utilitarios/formatacao';
 import type { Condicao } from '../utilitarios/estimulo';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
+import { BarraSuperior } from '../componentes/BarraSuperior';
 
 interface Props {
   participanteId: string;
@@ -126,12 +127,7 @@ export function ExperimentoLivre({ participanteId, onRecarregar }: Props) {
   // === PREPARAÇÃO ===
   return (
     <div className="min-h-screen bg-fundo flex flex-col pagina-entrar">
-      <header className="bg-principal shadow-sm">
-        <div className="max-w-lg mx-auto px-4 py-4 lg:max-w-5xl lg:px-8 lg:py-5 flex items-center gap-3">
-          <img src="/images/icone_sentempo.png" alt="Sentempo" className="h-7 w-7 object-contain" />
-          <span className="text-destaque-claro text-sm font-medium">Modo Livre - Preparação</span>
-        </div>
-      </header>
+      <BarraSuperior contexto="Modo livre · preparação" acao="Voltar ao modo livre" destino="/modo-livre" />
 
       <main id="conteudo-principal" tabIndex={-1} className="flex-1 max-w-lg mx-auto px-4 py-10 space-y-8 w-full lg:max-w-5xl lg:px-8 lg:py-16 lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-10 lg:items-start lg:content-start lg:space-y-0">
         <div className="bg-branco rounded-2xl border border-destaque-claro p-6 space-y-4">
