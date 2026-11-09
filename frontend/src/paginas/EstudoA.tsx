@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { consultarEstudo, continuarEstudo, criarEstudo, responderQuestionario, rotularCondicaoEstudo } from '../servicos/estudo';
+import { consultarEstudo, continuarEstudo, criarEstudo, responderQuestionario } from '../servicos/estudo';
 import type { ContextoEstudo, RespostaQuestionario, SessaoEstudo } from '../servicos/estudo';
 import { prepararAudioEstudo } from '../utilitarios/audio_estudo';
 import type { AudioEstudo } from '../utilitarios/audio_estudo';
 import { usarRodadaEstudo } from '../ganchos/usarRodadaEstudo';
 import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
-import { formatarErro, formatarSegundos } from '../utilitarios/formatacao';
 import { QuestionarioEstudo } from '../componentes/QuestionarioEstudo';
+import { ResultadosEstudo } from '../componentes/ResultadosEstudo';
 
 const botao = 'min-h-12 rounded-xl bg-destaque text-principal font-semibold px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -118,7 +118,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
   const protegida = ['ativa', 'preparando', 'salvando', 'confirmacao'].includes(rodada.estado);
   return (
     <div className={`min-h-screen ${ativa ? 'bg-principal text-branco' : 'bg-fundo text-principal'}`}>
-      <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-5 py-10 space-y-6">
+      <main id="conteudo-principal" tabIndex={-1} className={`max-w-2xl mx-auto px-5 py-10 space-y-6 ${sessao?.situacao === 'CONCLUIDA' ? 'lg:max-w-6xl lg:px-8 lg:py-12' : ''}`}>
         {!protegida && <Link to="/inicio" className="inline-flex min-h-11 items-center underline">Voltar ao início</Link>}
         <h1 ref={tituloRef} tabIndex={-1} className="text-2xl font-semibold">
           {ativa ? 'Em andamento' : rodada.estado === 'interrompida' ? 'Tentativa interrompida' : 'Estudo de percepção temporal'}
@@ -159,15 +159,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
         ) : sessao.questionario_pendente ? (
           <QuestionarioEstudo key={`${sessao.questionario_pendente.tipo}-${sessao.questionario_pendente.tentativa_id ?? sessao.questionario_pendente.bloco ?? 'final'}`} pergunta={sessao.questionario_pendente} ocupado={ocupado} aoConfirmar={responder} />
         ) : sessao.situacao === 'CONCLUIDA' ? (
-          <section className="space-y-5"><h2 className="text-xl font-semibold">As {sessao.total} tentativas foram concluídas</h2><p>Obrigado por participar. O estudo compara estimativas de duração em silêncio e com dois ritmos de bipes. Diferenças nas respostas não medem diretamente atenção ou concentração e não comprovam, por si, um efeito de nudge.</p>
-            <details><summary className="min-h-11 cursor-pointer underline">Ver meus resultados</summary>
-              <p className="my-4">Parada antecipada (erro negativo) é compatível com superestimação da duração transcorrida. Parada tardia (erro positivo), com subestimação.</p>
-              <ol className="space-y-3">{sessao.tentativas.map(t => <li key={t.id} className="rounded-xl border border-borda-controle bg-branco p-4">
-                <p>Tentativa {t.ordem} · bloco {t.bloco} · repetição {t.repeticao}</p><p>{rotularCondicaoEstudo(t.condicao)} · alvo {t.tempo_alvo_ms / 1000} s</p>
-                <p>Resultado: {formatarSegundos(t.resultado_ms ?? 0)} · erro: {formatarErro(t.erro_ms ?? 0)}</p><p>Erro absoluto: {formatarSegundos(t.erro_absoluto_ms ?? 0)} · erro relativo: {t.erro_relativo_percentual?.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}%</p>
-              </li>)}</ol>
-            </details>
-          </section>
+          <ResultadosEstudo sessao={sessao} />
         ) : sessao.situacao === 'INTERVALO' ? (
           <section className="space-y-5"><h2 className="text-xl font-semibold">Bloco {sessao.bloco_liberado} concluído</h2><p>Descanse o quanto quiser. Quando estiver pronto, continue para o próximo bloco.</p><p>{sessao.concluidas} de {sessao.total} tentativas concluídas.</p><button className={botao} disabled={ocupado} onClick={() => void continuar()}>Continuar</button></section>
         ) : sessao.proxima ? (
