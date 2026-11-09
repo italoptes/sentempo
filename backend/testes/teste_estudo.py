@@ -1,6 +1,7 @@
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
+from datetime import datetime, timezone
 import uuid
 
 import pytest
@@ -15,6 +16,24 @@ from testes.conftest import _FabricaSessaoTestes, _motor_testes
 DADOS = {"consentimento": True, "audio_testado": True, "dispositivo": "COMPUTADOR", "usa_fones": True, "volume": "0.5"}
 
 
+def criar_sessao_v1(participante_id):
+    """Representa uma sessão já coletada no desenho anterior, sem usar a API V2."""
+    with _FabricaSessaoTestes() as banco:
+        s = SessaoEstudo(participante_id=uuid.UUID(participante_id), versao_protocolo="ESTUDO_A_V1",
+            sequencia=0, bloco_liberado=1, dispositivo="COMPUTADOR", usa_fones=True, volume=Decimal("0.5"))
+        for bloco, condicao in enumerate(("SEM_ESTIMULO", "LENTO", "RAPIDO"), 1):
+            for posicao, (tempo, repeticao) in enumerate(((t, r) for t in (5000, 10000, 15000) for r in (1, 2, 3)), 1):
+                s.tentativas.append(TentativaEstudo(ordem=(bloco - 1) * 9 + posicao, bloco=bloco,
+                    tamanho_bloco=9, condicao=condicao, tempo_alvo_ms=tempo, repeticao=repeticao))
+        primeira = s.tentativas[0]
+        primeira.resultado_ms, primeira.erro_ms, primeira.erro_absoluto_ms = Decimal("5001"), Decimal("1"), Decimal("1")
+        primeira.erro_relativo_percentual = Decimal("0.02")
+        primeira.concluida_em = datetime.now(timezone.utc)
+        banco.add(s)
+        banco.commit()
+        return s.id
+
+
 def endereco(participante):
     return f"/api/participantes/{participante['id']}/estudo-a"
 
@@ -23,17 +42,36 @@ def test_plano_persistido_composicao_e_retomada(cliente, participante):
     url = endereco(participante)
     sessao = cliente.post(url, json=DADOS).json()
     assert sessao["concluidas"] == 0
-    assert sessao["total"] == 27
-    assert len({t["id"] for t in sessao["tentativas"]}) == 27
-    assert [t["ordem"] for t in sessao["tentativas"]] == list(range(1, 28))
+    assert sessao["versao_protocolo"] == "ESTUDO_A_V2"
+    assert sessao["total"] == 9
+    assert len({t["id"] for t in sessao["tentativas"]}) == 9
+    assert [t["ordem"] for t in sessao["tentativas"]] == list(range(1, 10))
     contagens = Counter((t["condicao"], t["tempo_alvo_ms"]) for t in sessao["tentativas"])
-    assert len(contagens) == 9 and set(contagens.values()) == {3}
+    assert len(contagens) == 9 and set(contagens.values()) == {1}
+    assert {t["repeticao"] for t in sessao["tentativas"]} == {1}
+    assert [b["total"] for b in sessao["blocos"]] == [3, 3, 3]
     for bloco in (1, 2, 3):
         itens = [t for t in sessao["tentativas"] if t["bloco"] == bloco]
         assert len({t["condicao"] for t in itens}) == 1
-        assert Counter(t["tempo_alvo_ms"] for t in itens) == {5000: 3, 10000: 3, 15000: 3}
+        assert Counter(t["tempo_alvo_ms"] for t in itens) == {5000: 1, 10000: 1, 15000: 1}
     assert cliente.get(url).json() == sessao
     assert cliente.post(url, json=DADOS).json() == sessao
+
+
+def test_nova_sessao_nao_altera_o_plano_historico(cliente, participante):
+    antiga_id = criar_sessao_v1(participante["id"])
+    with _FabricaSessaoTestes() as banco:
+        antiga = banco.get(SessaoEstudo, antiga_id)
+        antes = [(t.id, t.ordem, t.bloco, t.repeticao, t.resultado_ms) for t in antiga.tentativas]
+        assert EstudoServico.resposta(antiga).total == 27
+        assert [b.total for b in EstudoServico.resposta(antiga).blocos] == [9, 9, 9]
+    assert cliente.get(endereco(participante)).json() is None
+    nova = cliente.post(endereco(participante), json=DADOS).json()
+    assert nova["total"] == 9 and nova["id"] != str(antiga_id)
+    with _FabricaSessaoTestes() as banco:
+        antiga = banco.get(SessaoEstudo, antiga_id)
+        assert [(t.id, t.ordem, t.bloco, t.repeticao, t.resultado_ms) for t in antiga.tentativas] == antes
+        assert len(banco.scalars(select(SessaoEstudo)).all()) == 2
 
 
 def test_seis_ordens_balanceadas(cliente):
@@ -55,7 +93,7 @@ def test_fluxo_pausas_duplicidade_metricas_e_resultados_ocultos(cliente, partici
     assert cliente.post(url + "/continuar").status_code == 409
     assert cliente.post(url + "/tentativas/" + s["tentativas"][1]["id"], json={"resultado_ms": 5000}).status_code == 409
     primeira = s["proxima"]
-    for ordem in range(1, 28):
+    for ordem in range(1, 10):
         atual = s["proxima"]
         resposta = cliente.post(url + "/tentativas/" + atual["id"], json={"resultado_ms": atual["tempo_alvo_ms"] + 123.456})
         assert resposta.status_code == 200, resposta.text
@@ -65,15 +103,17 @@ def test_fluxo_pausas_duplicidade_metricas_e_resultados_ocultos(cliente, partici
         assert s["situacao"] == "QUESTIONARIO_TENTATIVA"
         assert cliente.get(url).json() == s
         s = cliente.post(url + "/questionario", json={"tipo": "TENTATIVA", "tentativa_id": atual["id"], "confianca": 5}).json()
-        if ordem % 9 == 0:
+        if ordem % 3 == 0:
             assert s["situacao"] == "QUESTIONARIO_BLOCO"
-            s = cliente.post(url + "/questionario", json={"tipo": "BLOCO", "bloco": ordem // 9, "agradabilidade": 4, "ansiedade": None}).json()
-        if ordem in (9, 18):
+            s = cliente.post(url + "/questionario", json={"tipo": "BLOCO", "bloco": ordem // 3, "agradabilidade": 4, "ansiedade": None}).json()
+        if ordem in (3, 6):
             assert s["situacao"] == "INTERVALO"
             assert cliente.get(url).json()["situacao"] == "INTERVALO"
             assert cliente.post(url + "/tentativas/" + s["proxima"]["id"], json={"resultado_ms": 5000}).status_code == 409
             s = cliente.post(url + "/continuar").json()
     assert s["situacao"] == "QUESTIONARIO_FINAL"
+    assert s["concluidas"] == 9 and s["proxima"] is None
+    assert [b["concluidas"] for b in s["blocos"]] == [3, 3, 3]
     s = cliente.post(url + "/questionario", json={"tipo": "FINAL", "estrategia": "SEM_CONTAGEM", "comentario": " Sem contagem "}).json()
     assert s["situacao"] == "CONCLUIDA" and s["proxima"] is None
     assert s["estrategia"] == "SEM_CONTAGEM" and s["comentario"] == "Sem contagem"
@@ -133,6 +173,15 @@ def test_banco_protege_posicao_e_resultado(cliente, participante):
             banco.commit()
         banco.rollback()
         t.resultado_ms = Decimal("10")
+        with pytest.raises(IntegrityError):
+            banco.commit()
+
+
+def test_banco_rejeita_segunda_repeticao_na_nova_coleta(cliente, participante):
+    s = cliente.post(endereco(participante), json=DADOS).json()
+    with _FabricaSessaoTestes() as banco:
+        t = banco.get(TentativaEstudo, uuid.UUID(s["proxima"]["id"]))
+        t.repeticao = 2
         with pytest.raises(IntegrityError):
             banco.commit()
 

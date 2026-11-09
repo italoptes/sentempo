@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.entidades.estudo import SessaoEstudo, TentativaEstudo
 from app.entidades.tentativa import Tentativa, TipoTentativa
+from app.servicos.estudo_servico import VERSAO
 
 CABECALHO = [
     "codigo_participante", "origem", "sessao_id", "versao_protocolo", "sequencia", "condicao",
@@ -28,7 +29,7 @@ class ExportacaoServico:
     def __init__(self, sessao: Session):
         self.sessao = sessao
 
-    def gerar_csv(self, origem: str = "ANTERIOR") -> str:
+    def gerar_csv(self, origem: str = "ANTERIOR", versao: str = VERSAO) -> str:
         arquivo = io.StringIO()
         arquivo.write("\ufeff")
         escritor = csv.DictWriter(arquivo, fieldnames=CABECALHO, delimiter=";", lineterminator="\n")
@@ -47,7 +48,7 @@ class ExportacaoServico:
         elif origem == "ESTUDO_A":
             consulta = (select(TentativaEstudo, SessaoEstudo).join(SessaoEstudo)
                 .options(selectinload(SessaoEstudo.respostas_blocos))
-                .where(TentativaEstudo.resultado_ms.is_not(None))
+                .where(TentativaEstudo.resultado_ms.is_not(None), SessaoEstudo.versao_protocolo == versao)
                 .order_by(SessaoEstudo.consentido_em, SessaoEstudo.id, TentativaEstudo.ordem))
             for t, s in self.sessao.execute(consulta):
                 bloco = next((r for r in s.respostas_blocos if r.bloco == t.bloco), None)

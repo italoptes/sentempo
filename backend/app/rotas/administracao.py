@@ -23,6 +23,7 @@ from app.servicos.estatisticas_servico import EstatisticasServico
 from app.servicos.exportacao_servico import ExportacaoServico
 from app.servicos.participante_servico import ParticipanteServico
 from app.servicos.relatorio_estudo_servico import RelatorioEstudoServico
+from app.servicos.estudo_servico import VERSAO
 
 
 roteador = APIRouter(prefix="/administracao", tags=["administração"])
@@ -124,8 +125,12 @@ async def excluir_participante(
     "/exportacao.csv",
     dependencies=[Depends(exigir_administrador)],
 )
-async def exportar_csv(sessao: Annotated[Session, Depends(obter_sessao)], origem: Literal["ANTERIOR", "ESTUDO_A", "LIVRE"] = "ANTERIOR") -> Response:
-    conteudo = ExportacaoServico(sessao).gerar_csv(origem)
+async def exportar_csv(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    origem: Literal["ANTERIOR", "ESTUDO_A", "LIVRE"] = "ANTERIOR",
+    versao: Literal["ESTUDO_A_V1", "ESTUDO_A_V2"] = VERSAO,
+) -> Response:
+    conteudo = ExportacaoServico(sessao).gerar_csv(origem, versao)
     return Response(
         content=conteudo.encode("utf-8"),
         media_type="text/csv; charset=utf-8",
@@ -138,5 +143,6 @@ def painel_estudo(
     sessao: Annotated[Session, Depends(obter_sessao)],
     pagina: Annotated[int, Query(ge=1)] = 1,
     tamanho: Annotated[int, Query(ge=1, le=100)] = 10,
+    versao: Literal["ESTUDO_A_V1", "ESTUDO_A_V2"] = VERSAO,
 ) -> dict:
-    return RelatorioEstudoServico(sessao).painel(pagina, tamanho)
+    return RelatorioEstudoServico(sessao).painel(pagina, tamanho, versao)

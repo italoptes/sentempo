@@ -40,7 +40,7 @@ class BlocoResposta(BaseModel):
     posicao: int
     condicao: str
     concluidas: int
-    total: int = 9
+    total: int
 
 
 class SessaoResposta(BaseModel):
@@ -55,7 +55,7 @@ class SessaoResposta(BaseModel):
     concluida_em: datetime | None
     bloco_liberado: int
     concluidas: int
-    total: int = 27
+    total: int
     situacao: Literal["EM_ANDAMENTO", "INTERVALO", "CONCLUIDA", "QUESTIONARIO_TENTATIVA", "QUESTIONARIO_BLOCO", "QUESTIONARIO_FINAL"]
     proxima: PosicaoResposta | None
     blocos: list[BlocoResposta]

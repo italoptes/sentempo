@@ -1,10 +1,11 @@
 import csv
 import io
 
-from testes.teste_estudo import DADOS, endereco
+from testes.teste_estudo import DADOS, criar_sessao_v1, endereco
 
 
 def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, token_administrativo):
+    antiga_id = criar_sessao_v1(participante["id"])
     url_antigo = f"/api/participantes/{participante['id']}/tentativas"
     for tempo in (15000, 30000):
         assert cliente.post(url_antigo, json={"tempo_alvo_ms": tempo, "condicao": "LENTO", "resultado_ms": tempo}).status_code == 201
@@ -19,6 +20,8 @@ def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, toke
     assert cliente.get("/api/administracao/estudo-a").status_code in (401, 403)
     painel = cliente.get("/api/administracao/estudo-a", headers=cabecalho).json()
     assert painel["sessoes_total"] == 1 and painel["tentativas_concluidas"] == 1
+    assert painel["versao_protocolo"] == "ESTUDO_A_V2"
+    assert painel["sessoes"][0]["total"] == 9
     assert painel["estatisticas"][0]["erro_medio_ms"] == -100
     assert painel["sessoes"][0]["tentativas"][0]["resultado_ms"] == t["tempo_alvo_ms"] - 100
     assert cliente.get("/api/administracao/resumo", headers=cabecalho).json()["tentativas_validas_total"] == 2
@@ -36,3 +39,13 @@ def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, toke
             assert linha["confianca"] == "6" and linha["confianca_respondida_em"]
             assert linha["dispositivo"] == "COMPUTADOR" and linha["sessao_concluida_em"] == ""
     assert cliente.get("/api/administracao/exportacao.csv?origem=TODOS", headers=cabecalho).status_code == 422
+    anterior = cliente.get("/api/administracao/estudo-a?versao=ESTUDO_A_V1", headers=cabecalho).json()
+    assert anterior["sessoes_total"] == 1 and anterior["tentativas_concluidas"] == 1
+    assert anterior["estatisticas"][0]["erro_medio_ms"] == 1
+    assert anterior["sessoes"][0]["id"] == str(antiga_id)
+    assert anterior["sessoes"][0]["total"] == 27
+    antigo_csv = cliente.get("/api/administracao/exportacao.csv?origem=ESTUDO_A&versao=ESTUDO_A_V1", headers=cabecalho)
+    linhas = list(csv.DictReader(io.StringIO(antigo_csv.text.lstrip("\ufeff")), delimiter=";"))
+    assert len(linhas) == 1 and linhas[0]["versao_protocolo"] == "ESTUDO_A_V1"
+    assert linhas[0]["sessao_id"] == str(antiga_id)
+    assert cliente.get("/api/administracao/estudo-a?versao=INVALIDA", headers=cabecalho).status_code == 422

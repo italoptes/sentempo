@@ -13,7 +13,8 @@ from app.entidades.estudo import DistribuicaoProtocolo, RespostaBloco, SessaoEst
 from app.entidades.participante import Participante
 from app.esquemas.estudo import BlocoResposta, PosicaoResposta, RespostaQuestionario, ResultadoEstudo, SessaoCriacao, SessaoResposta
 
-VERSAO = "ESTUDO_A_V1"
+VERSAO = "ESTUDO_A_V2"
+TAMANHO_BLOCO = 3
 SEQUENCIAS = tuple(permutations(("SEM_ESTIMULO", "LENTO", "RAPIDO")))
 
 
@@ -58,11 +59,11 @@ class EstudoServico:
                              sequencia=indice % 6, bloco_liberado=1, dispositivo=dados.dispositivo,
                              usa_fones=dados.usa_fones, volume=dados.volume)
         for bloco, condicao in enumerate(SEQUENCIAS[sessao.sequencia], 1):
-            combinacoes = [(tempo, repeticao) for tempo in (5000, 10000, 15000) for repeticao in (1, 2, 3)]
+            combinacoes = [(tempo, 1) for tempo in (5000, 10000, 15000)]
             random.SystemRandom().shuffle(combinacoes)
             for posicao, (tempo, repeticao) in enumerate(combinacoes, 1):
-                sessao.tentativas.append(TentativaEstudo(ordem=(bloco - 1) * 9 + posicao,
-                    bloco=bloco, condicao=condicao, tempo_alvo_ms=tempo, repeticao=repeticao))
+                sessao.tentativas.append(TentativaEstudo(ordem=(bloco - 1) * TAMANHO_BLOCO + posicao,
+                    bloco=bloco, tamanho_bloco=TAMANHO_BLOCO, condicao=condicao, tempo_alvo_ms=tempo, repeticao=repeticao))
         self.banco.add(sessao)
         self.banco.commit()
         return self.obter(participante_id)
@@ -119,7 +120,7 @@ class EstudoServico:
                 return None
             if t.respondida_em is None:
                 return {"tipo": "TENTATIVA", "tentativa_id": str(t.id), "ordem": t.ordem}
-            if t.ordem % 9 == 0 and t.bloco not in blocos_respondidos:
+            if t.ordem % t.tamanho_bloco == 0 and t.bloco not in blocos_respondidos:
                 return {"tipo": "BLOCO", "bloco": t.bloco}
         if sessao.concluida_em is None:
             return {"tipo": "FINAL"}
@@ -164,8 +165,8 @@ class EstudoServico:
             ordem_condicoes=list(SEQUENCIAS[sessao.sequencia]), dispositivo=sessao.dispositivo,
             usa_fones=sessao.usa_fones, volume=sessao.volume, consentido_em=sessao.consentido_em,
             concluida_em=sessao.concluida_em, bloco_liberado=sessao.bloco_liberado,
-            concluidas=sum(t.concluida for t in posicoes), situacao=situacao, proxima=proxima,
-            blocos=[BlocoResposta(posicao=i, condicao=condicao, concluidas=sum(t.concluida and t.bloco == i for t in posicoes))
+            concluidas=sum(t.concluida for t in posicoes), total=len(posicoes), situacao=situacao, proxima=proxima,
+            blocos=[BlocoResposta(posicao=i, condicao=condicao, concluidas=sum(t.concluida and t.bloco == i for t in posicoes), total=sum(t.bloco == i for t in posicoes))
                     for i, condicao in enumerate(SEQUENCIAS[sessao.sequencia], 1)], tentativas=posicoes,
             questionario_pendente=pendente,
             respostas_blocos=[{"bloco": r.bloco, "agradabilidade": r.agradabilidade, "ansiedade": r.ansiedade} for r in sessao.respostas_blocos],

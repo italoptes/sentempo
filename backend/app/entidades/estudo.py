@@ -45,8 +45,9 @@ class TentativaEstudo(Base):
     __table_args__ = (
         UniqueConstraint("sessao_id", "ordem", name="uq_estudo_sessao_ordem"),
         UniqueConstraint("sessao_id", "condicao", "tempo_alvo_ms", "repeticao", name="uq_estudo_repeticao"),
-        CheckConstraint("ordem BETWEEN 1 AND 27 AND bloco BETWEEN 1 AND 3 AND repeticao BETWEEN 1 AND 3", name="ck_estudo_posicao"),
-        CheckConstraint("bloco = 1 + (ordem - 1) / 9", name="ck_estudo_bloco_ordem"),
+        CheckConstraint("tamanho_bloco IN (3, 9)", name="ck_estudo_tamanho_bloco"),
+        CheckConstraint("ordem BETWEEN 1 AND 3 * tamanho_bloco AND bloco BETWEEN 1 AND 3 AND repeticao BETWEEN 1 AND tamanho_bloco / 3", name="ck_estudo_posicao"),
+        CheckConstraint("bloco = 1 + (ordem - 1) / tamanho_bloco", name="ck_estudo_bloco_ordem"),
         CheckConstraint("tempo_alvo_ms IN (5000, 10000, 15000)", name="ck_estudo_tempo"),
         CheckConstraint("condicao IN ('SEM_ESTIMULO', 'LENTO', 'RAPIDO')", name="ck_estudo_condicao"),
         CheckConstraint("confianca IS NULL OR confianca BETWEEN 1 AND 7", name="ck_estudo_confianca"),
@@ -61,6 +62,7 @@ class TentativaEstudo(Base):
     sessao_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessoes_estudo.id", ondelete="CASCADE"), index=True)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False)
     bloco: Mapped[int] = mapped_column(Integer, nullable=False)
+    tamanho_bloco: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
     repeticao: Mapped[int] = mapped_column(Integer, nullable=False)
     condicao: Mapped[str] = mapped_column(String(20), nullable=False)
     tempo_alvo_ms: Mapped[int] = mapped_column(Integer, nullable=False)

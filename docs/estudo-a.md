@@ -1,10 +1,10 @@
-# Estudo A — ESTUDO_A_V1
+# Estudo A — ESTUDO_A_V2
 
 ## Desenho aprovado
 
 Cada participante tem uma sessão por versão: três blocos, um por condição
-(`SEM_ESTIMULO`, `LENTO`, `RAPIDO`). Cada bloco contém três tentativas de cada
-tempo-alvo (5000, 10000, 15000 ms), em ordem sorteada e persistida. São 27
+(`SEM_ESTIMULO`, `LENTO`, `RAPIDO`). Cada bloco contém uma tentativa de cada
+tempo-alvo (5000, 10000, 15000 ms), em ordem sorteada e persistida. São 9
 resultados concluídos. As seis permutações das condições são atribuídas em ciclo
 por contador transacional no banco; a diferença de alocações é de no máximo um
 na ausência de exclusões administrativas. Retomadas não consomem outra sequência.
@@ -14,10 +14,17 @@ Ela foi removida para reduzir duração e complexidade e concentrar a comparaç�
 em ritmos constantes e silêncio. Não há treinamento nesta versão. Estudo B está
 fora do escopo. O fluxo antigo e o modo livre não integram a coleta.
 
+Em 09/11/2026, o escopo foi reduzido de três repetições por combinação (27
+tentativas, ESTUDO_A_V1) para uma (9 tentativas, ESTUDO_A_V2). V1 permanece
+como histórico de consulta e exportação, sem apagar ou truncar posições,
+respostas ou resultados. A entrada do participante cria/retoma apenas V2.
+Não reutilizamos consentimento ou resultados de V1 para preencher V2.
+O contador de contrabalanceamento é independente para cada versão.
+
 ## Participação
 
 Explicação neutra e consentimento → dispositivo/fones → teste de áudio e volume
-confortável → instruções → três blocos de nove tentativas → encerramento.
+confortável → instruções → três blocos de três tentativas → encerramento.
 Orientar a estimar sem contar segundos ou bipes. Não revelar hipóteses.
 
 O participante conhece o alvo antes de iniciar. A tela ativa é visualmente igual
@@ -49,7 +56,7 @@ Parada antecipada é compatível com superestimação da duração transcorrida;
 parada tardia, com subestimação. Não inferir medida direta de atenção ou
 concentração, nem comprovação automática de efeito de nudge.
 
-Resultados numéricos só são disponibilizados ao participante ao concluir as 27
+Resultados numéricos só são disponibilizados ao participante ao concluir as 9
 tentativas. Administração e exportação identificam explicitamente protocolo
 anterior, Estudo A e modo livre; a exportação usa UUID do participante como
 pseudônimo, sem nome nem código de acesso de quatro dígitos.
@@ -76,7 +83,11 @@ coleta real. A sessão encerra após o questionário final (inclusive se pulado)
 Migrações aditivas criam sessões e tentativas planejadas em tabelas próprias,
 sem converter ou apagar resultados anteriores de 30 segundos. As restrições de
 unicidade anteriores continuam válidas para o protocolo antigo. Novas posições
-são únicas por sessão; há três repetições por combinação.
+são únicas por sessão; há uma tentativa por combinação na V2, com `repeticao=1`.
+A migração `0005_estudo_a_nove` preserva o tamanho dos blocos antigos (9),
+permite os novos blocos de 3 e mantém as restrições de duplicidade. A informação
+`tamanho_bloco` de cada posição determina os limites de ordem e repetição. O
+downgrade é recusado enquanto houver sessões V2, evitando uma conversão inválida.
 
 Exclusões existentes exigem JWT administrativo. Exclusão individual verifica
 participante e tentativa simultaneamente. Não oferecer exclusão de resultados
@@ -92,8 +103,8 @@ antigos. Índices, locks e migrações devem ser verificados também em PostgreS
 
 Prefixo `/api/participantes/{participante_id}/estudo-a`:
 
-- GET: sessão atual ou null quando não existe.
-- POST: criar após consentimento e áudio testado, ou retomar a sessão existente.
+- GET: sessão V2 ou null quando não existe, mesmo que haja sessão histórica V1.
+- POST: criar V2 após consentimento e áudio testado, ou retomar a V2 existente.
   Corpo: `consentimento: true`, `audio_testado: true`, `dispositivo` (COMPUTADOR,
   CELULAR, TABLET, OUTRO), `usa_fones` booleano, `volume` entre 0.1 e 1.
 - POST `/tentativas/{tentativa_id}`: `resultado_ms`, sem métricas do cliente.
@@ -105,14 +116,17 @@ QUESTIONARIO_FINAL, CONCLUIDA. Resultados são ocultados até CONCLUIDA. Não h�
 endpoint de exclusão de posição do novo estudo. Sessão por participante/versão
 evita recomeçar a coleta inteira ou consumir uma nova ordem ao retomar.
 
-Administração autenticada: GET `/api/administracao/estudo-a?pagina=1&tamanho=10`
+Administração autenticada: GET `/api/administracao/estudo-a?pagina=1&tamanho=10&versao=ESTUDO_A_V2`
 retorna resumo, médias por condição/tempo e sessões com plano e respostas. A
 paginação aceita até 100 sessões. As estatísticas incluem tentativas confirmadas
-de sessões em andamento e completas, informando isso no painel.
+de sessões em andamento e completas, informando isso no painel. O filtro
+`versao` aceita ESTUDO_A_V2 (padrão) ou ESTUDO_A_V1 (histórico). Não mistura
+sessões com 9 e 27 tentativas nas mesmas estatísticas.
 
-CSV: GET `/api/administracao/exportacao.csv?origem=ESTUDO_A`, ou origem ANTERIOR
+CSV: GET `/api/administracao/exportacao.csv?origem=ESTUDO_A&versao=ESTUDO_A_V2`, ou origem ANTERIOR
 (padrão de compatibilidade) e LIVRE. Cada arquivo tem apenas uma origem; o
-cabeçalho identifica a versão. Não exporta nomes nem códigos de acesso. Os
+cabeçalho identifica a versão. ESTUDO_A exporta apenas a versão selecionada
+(V2 por padrão); V1 pode ser exportada explicitamente. Não exporta nomes nem códigos de acesso. Os
 endpoints antigos de resumo e estatísticas continuam restritos ao protocolo
 anterior, explicitamente identificado na interface.
 
@@ -128,7 +142,7 @@ apóstrofo de proteção somente na exportação; o banco mantém o texto origin
 | origem, versao_protocolo | Separação entre ANTERIOR, ESTUDO_A e LIVRE |
 | sessao_id, sequencia | UUID da sessão e índice de permutação 0–5 |
 | condicao, tempo_alvo_ms | Condição e alvo em milissegundos |
-| bloco, ordem, repeticao | Bloco 1–3; ordem 1–27; repetição da combinação 1–3 |
+| bloco, ordem, repeticao | V2: bloco 1–3, ordem 1–9, repetição sempre 1; V1 histórica: ordem 1–27 e repetição 1–3 |
 | resultado_ms, erro_ms, erro_absoluto_ms | Valores em ms, três casas decimais |
 | erro_relativo_percentual | Erro assinado dividido pelo alvo, vezes 100 |
 | concluida_em | Momento UTC de confirmação da medição |
