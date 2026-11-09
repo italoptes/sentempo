@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ParticipanteDetalhe } from '../tipos/participante';
+import { obterStatusModoLivre } from '../servicos/modo_livre';
 import type { ModoLivreStatus } from '../servicos/modo_livre';
 import { consultarParticipante } from '../servicos/participantes';
 
@@ -55,7 +56,6 @@ export function usarParticipante() {
       const dados = await consultarParticipante(participanteId);
       setDetalhe(dados);
       try {
-        const { obterStatusModoLivre } = await import('../servicos/modo_livre');
         const statusModo = await obterStatusModoLivre(participanteId);
         setModoLivre(statusModo);
       } catch (e) {

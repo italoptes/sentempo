@@ -4,7 +4,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.nucleo.configuracoes import obter_configuracoes
 from app.nucleo.limitador import handler_limite_excedido, limitador
-from app.rotas import administracao, modo_livre, participantes, saude, tentativas
+from app.rotas import administracao, estudo, modo_livre, participantes, saude, tentativas
 
 
 configuracoes = obter_configuracoes()
@@ -33,3 +33,4 @@ aplicacao.include_router(participantes.roteador, prefix="/api")
 aplicacao.include_router(tentativas.roteador, prefix="/api")
 aplicacao.include_router(modo_livre.roteador, prefix="/api")
 aplicacao.include_router(administracao.roteador, prefix="/api")
+aplicacao.include_router(estudo.roteador, prefix="/api")

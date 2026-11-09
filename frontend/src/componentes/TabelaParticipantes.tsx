@@ -11,9 +11,10 @@ interface Props {
   onDetalhar: (id: string) => void;
   onExcluirConta: (id: string) => void;
   carregando: boolean;
+  mostrarProgresso?: boolean;
 }
 
-export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, onExcluirConta, carregando }: Props) {
+export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, onExcluirConta, carregando, mostrarProgresso = true }: Props) {
   const [busca, setBusca] = useState('');
 
   function handleBusca(e: React.FormEvent) {
@@ -58,16 +59,16 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                   <p className="text-principal font-semibold">{item.nome}</p>
                   <p className="text-texto-secundario text-xs font-mono">{item.codigo}</p>
                 </div>
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium
+                {mostrarProgresso && <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium
                   ${item.situacao === 'COMPLETO' ? 'bg-destaque-claro text-principal' : 'bg-fundo text-texto-secundario border border-destaque-claro'}`}>
                   {item.situacao === 'COMPLETO' ? '✓ Completo' : 'Incompleto'}
-                </span>
+                </span>}
               </div>
               
-              <div className="flex justify-between items-center text-sm">
+              {mostrarProgresso && <div className="flex justify-between items-center text-sm">
                 <span className="text-texto-secundario">Tentativas:</span>
                 <span className="font-medium text-principal">{item.tentativas_concluidas}/9</span>
-              </div>
+              </div>}
               
               <div className="flex justify-between items-center text-xs text-texto-secundario">
                 <span>Criado em:</span>
@@ -104,8 +105,8 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
             <tr className="bg-destaque-claro text-principal">
               <th scope="col" className="px-4 py-3 text-left font-semibold">Nome</th>
               <th scope="col" className="px-4 py-3 text-left font-semibold">Código</th>
-              <th scope="col" className="px-4 py-3 text-center font-semibold">Tentativas</th>
-              <th scope="col" className="px-4 py-3 text-center font-semibold">Situação</th>
+              {mostrarProgresso && <th scope="col" className="px-4 py-3 text-center font-semibold">Tentativas</th>}
+              {mostrarProgresso && <th scope="col" className="px-4 py-3 text-center font-semibold">Situação</th>}
               <th scope="col" className="px-4 py-3 text-left font-semibold">Criado em</th>
               <th scope="col" className="px-4 py-3 text-center font-semibold">Ações</th>
             </tr>
@@ -113,7 +114,7 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
           <tbody>
             {pagina.itens.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-texto-secundario italic">
+                <td colSpan={mostrarProgresso ? 6 : 4} className="px-4 py-6 text-center text-texto-secundario italic">
                   Nenhum participante encontrado.
                 </td>
               </tr>
@@ -122,13 +123,13 @@ export function TabelaParticipantes({ pagina, onPaginar, onBuscar, onDetalhar, o
                 <tr key={item.id} className="border-t border-destaque-claro hover:bg-fundo transition-colors">
                   <td className="px-4 py-3">{item.nome}</td>
                   <td className="px-4 py-3 font-mono">{item.codigo}</td>
-                  <td className="px-4 py-3 text-center">{item.tentativas_concluidas}/9</td>
-                  <td className="px-4 py-3 text-center">
+                  {mostrarProgresso && <td className="px-4 py-3 text-center">{item.tentativas_concluidas}/9</td>}
+                  {mostrarProgresso && <td className="px-4 py-3 text-center">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium
                       ${item.situacao === 'COMPLETO' ? 'bg-destaque-claro text-principal' : 'bg-fundo text-texto-secundario border border-destaque-claro'}`}>
                       {item.situacao === 'COMPLETO' ? '✓ Completo' : 'Incompleto'}
                     </span>
-                  </td>
+                  </td>}
                   <td className="px-4 py-3 text-texto-secundario text-xs">{formatarData(item.criado_em)}</td>
                   <td className="px-4 py-3 text-center flex justify-center gap-2 items-center">
                     <button

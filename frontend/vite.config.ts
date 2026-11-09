@@ -18,25 +18,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^\/api\/.*/i,
-            handler: 'NetworkOnly',
-            options: {
-              backgroundSync: {
-                name: 'api-queue',
-                options: {
-                  maxRetentionTime: 24 * 60 // 24 horas
-                }
-              }
-            }
-          }
-        ]
+        // Coleta exige confirmação online. Nunca enfileirar salvamentos para replay.
+        runtimeCaching: []
       },
       manifest: {
         name: 'SenTempo',
         short_name: 'SenTempo',
-        description: 'Gestão de Corridas de Orientação',
+        description: 'Estudo de percepção temporal',
         theme_color: '#0F2D2E',
         background_color: '#F7F8F7',
         display: 'standalone',

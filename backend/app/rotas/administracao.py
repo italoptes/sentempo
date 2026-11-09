@@ -22,6 +22,9 @@ from app.nucleo.seguranca import credenciais_validas, criar_token
 from app.servicos.estatisticas_servico import EstatisticasServico
 from app.servicos.exportacao_servico import ExportacaoServico
 from app.servicos.participante_servico import ParticipanteServico
+from app.servicos.relatorio_estudo_servico import RelatorioEstudoServico
+from app.servicos.relatorio_livre_servico import RelatorioLivreServico
+from app.servicos.estudo_servico import VERSAO
 
 
 roteador = APIRouter(prefix="/administracao", tags=["administração"])
@@ -123,10 +126,33 @@ async def excluir_participante(
     "/exportacao.csv",
     dependencies=[Depends(exigir_administrador)],
 )
-async def exportar_csv(sessao: Annotated[Session, Depends(obter_sessao)]) -> Response:
-    conteudo = ExportacaoServico(sessao).gerar_csv()
+async def exportar_csv(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    origem: Literal["ANTERIOR", "ESTUDO_A", "LIVRE"] = "ANTERIOR",
+    versao: Literal["ESTUDO_A_V1", "ESTUDO_A_V2"] = VERSAO,
+) -> Response:
+    conteudo = ExportacaoServico(sessao).gerar_csv(origem, versao)
     return Response(
         content=conteudo.encode("utf-8"),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="sentempo-resultados.csv"'},
     )
+
+
+@roteador.get("/modo-livre", dependencies=[Depends(exigir_administrador)])
+def painel_modo_livre(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    pagina: Annotated[int, Query(ge=1)] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 10,
+) -> dict:
+    return RelatorioLivreServico(sessao).painel(pagina, tamanho)
+
+
+@roteador.get("/estudo-a", dependencies=[Depends(exigir_administrador)])
+def painel_estudo(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    pagina: Annotated[int, Query(ge=1)] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 10,
+    versao: Literal["ESTUDO_A_V1", "ESTUDO_A_V2"] = VERSAO,
+) -> dict:
+    return RelatorioEstudoServico(sessao).painel(pagina, tamanho, versao)

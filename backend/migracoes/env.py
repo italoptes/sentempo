@@ -11,7 +11,7 @@ from app.nucleo.configuracoes import obter_configuracoes
 configuracao_alembic = context.config
 if configuracao_alembic.config_file_name is not None:
     fileConfig(configuracao_alembic.config_file_name)
-configuracao_alembic.set_main_option("sqlalchemy.url", obter_configuracoes().banco_url)
+configuracao_alembic.set_main_option("sqlalchemy.url", obter_configuracoes().banco_url.replace("%", "%%"))
 metadados_alvo = Base.metadata
 
 

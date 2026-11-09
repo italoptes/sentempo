@@ -1,8 +1,30 @@
-# Experimento de Percepção Temporal com Nudges Audiovisuais
+# Sentempo — percepção temporal
+
+## Protocolo vigente: Estudo A
+
+A segunda unidade utiliza o protocolo `ESTUDO_A_V2`, especificado em
+[docs/estudo-a.md](docs/estudo-a.md). Essa especificação prevalece sobre as regras
+históricas abaixo para **novas sessões do estudo**. O protocolo anterior e o modo
+livre continuam separados, com seus dados preservados.
+
+O Estudo A tem 9 tentativas: silêncio, bipes de 60 BPM e bipes de 120 BPM;
+tempos de 5, 10 e 15 segundos; uma tentativa por combinação, sem repetições.
+São três blocos de três tentativas. Mantemos a exclusão dos bipes acelerados
+para concentrar a comparação em dois ritmos constantes e silêncio.
+As sessões já criadas com 27 tentativas permanecem como `ESTUDO_A_V1`, sem
+alteração dos planos ou resultados, consultáveis separadamente na administração
+e exportação. Novas participações usam V2, com novo consentimento e teste de áudio.
+Não inclui treinamento nem o Estudo B. O questionário aprovado coleta confiança
+por tentativa, agradabilidade/ansiedade por bloco e estratégia ao final, sempre
+com opção de não responder.
+
+## Especificação histórica — protocolo anterior
 
 Sistema acadêmico para a disciplina de Interface com Usuário. O sistema executa um experimento de percepção temporal: a pessoa tenta indicar quando acredita que um tempo-alvo terminou, sob diferentes condições de estímulo audiovisual.
 
-Este documento é a especificação principal do projeto. As regras aqui descritas devem ser implementadas integralmente; não criar comportamentos alternativos sem atualizar este arquivo.
+As seções numeradas abaixo documentam o protocolo anterior (5/15/30 segundos,
+estímulos audiovisuais aleatórios). Não descrevem a nova coleta do Estudo A.
+As exclusões de resultados são restritas à administração autenticada.
 
 ## 1. Objetivo
 

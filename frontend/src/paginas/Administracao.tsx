@@ -2,15 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usarAdministracao } from '../ganchos/usarAdministracao';
-import { ResumoEstatisticas, TabelaEstatisticas } from '../componentes/ResumoEstatisticas';
 import { TabelaParticipantes } from '../componentes/TabelaParticipantes';
 import { detalharParticipante } from '../servicos/administracao';
 import type { ParticipanteAdministracao } from '../tipos/administracao';
 import { TabelaResultados } from '../componentes/TabelaResultados';
 import { ModalConfirmacao } from '../componentes/ModalConfirmacao';
-import { rotularCondicao, rotularTempo, formatarErro, formatarErroAbsoluto } from '../utilitarios/formatacao';
-import { IndicadorCarregamento } from '../componentes/IndicadorCarregamento';
 import { Ring } from '../componentes/loading-ui/Ring';
+import { AdministracaoEstudo } from '../componentes/AdministracaoEstudo';
+import { AdministracaoLivre } from '../componentes/AdministracaoLivre';
+import { baixarCSV } from '../servicos/administracao';
+import { BarraSuperior } from '../componentes/BarraSuperior';
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
 function TelaLogin({
@@ -32,11 +33,11 @@ function TelaLogin({
 
   return (
     <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
-          <img src="/images/logo_principal.png" alt="Sentempo" className="h-14 mx-auto object-contain mb-4" />
-          <h1 className="text-xl font-semibold text-principal">Área Administrativa</h1>
-          <p className="text-texto-secundario text-sm mt-1">Acesso restrito à equipe de pesquisa.</p>
+      <div className="w-full max-w-md space-y-8 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 lg:space-y-0">
+        <div className="text-center lg:text-left">
+          <img src="/images/logo_principal.png" alt="Sentempo" className="h-16 mx-auto object-contain mb-6 lg:mx-0 lg:h-20" />
+          <h1 className="text-3xl font-semibold text-principal">Área administrativa</h1>
+          <p className="text-texto-secundario text-sm mt-1">Acompanhe as sessões de estudo e os resultados do modo livre. Acesso restrito à equipe de pesquisa.</p>
         </div>
 
         <div className="bg-branco rounded-2xl border border-destaque-claro p-8">
@@ -92,22 +93,21 @@ function TelaLogin({
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export function Administracao() {
-    const {
+  const {
     token,
     autenticado,
     carregando,
     erro,
-    resumo,
-    estatisticasCondicao,
-    estatisticasTempo,
-    estatisticasTempoCondicao,
     pagina,
     login,
     sair,
-    carregarResumo,
     carregarParticipantes,
   } = usarAdministracao();
 
+  const [area, definirArea] = useState<'PESQUISA' | 'LIVRE'>('PESQUISA');
+  const [atualizacao, definirAtualizacao] = useState(0);
+  const [erroExportacao, definirErroExportacao] = useState<string | null>(null);
+  const [exportando, definirExportando] = useState(false);
   const [busca, setBusca] = useState('');
   const [detalhe, setDetalhe] = useState<ParticipanteAdministracao | null>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
@@ -117,11 +117,10 @@ export function Administracao() {
   const painelDetalheRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (autenticado) {
-      void carregarResumo();
+    if (autenticado && area === 'LIVRE') {
       void carregarParticipantes(1, 20);
     }
-  }, [autenticado, carregarResumo, carregarParticipantes]);
+  }, [autenticado, area, atualizacao, carregarParticipantes]);
 
   useEffect(() => {
     if (detalhe) {
@@ -169,127 +168,69 @@ export function Administracao() {
 
   return (
     <div className="min-h-screen bg-fundo pagina-entrar">
-      {/* Cabeçalho */}
-      <header className="bg-principal shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/images/icone_sentempo.png" alt="Sentempo" className="h-7 w-7 object-contain" />
-            <span className="text-destaque-claro font-semibold text-sm">Dashboard Administrativo</span>
-          </div>
-          <button
-            id="btn-sair-admin"
-            type="button"
-            onClick={sair}
-            className="text-sm text-destaque-claro hover:text-branco transition-colors
-              focus-visible:outline-2 focus-visible:outline-destaque rounded px-2 py-1"
-          >
-            Sair
-          </button>
+      <BarraSuperior contexto="Painel administrativo" nome="Administrador" acao="Sair" aoAcionar={sair} />
+
+      <main id="conteudo-principal" tabIndex={-1} className="max-w-6xl mx-auto px-4 py-6 space-y-6 lg:px-8 lg:py-8">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold lg:text-3xl">Painel administrativo</h1>
+          <p className="text-sm text-texto-secundario">Consulte os resultados e exporte a base selecionada.</p>
         </div>
-      </header>
-
-      <main id="conteudo-principal" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 space-y-10">
-        {/* Erro geral */}
-        {erro && !carregando && (
-          <p role="alert" className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">{erro}</p>
-        )}
-
-        {/* Resumo e estatísticas */}
-        {resumo ? (
-          <>
-            <section aria-label="Resumo geral">
-              <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-4">Resumo geral</h2>
-              <ResumoEstatisticas resumo={resumo} />
-            </section>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {estatisticasCondicao && (
-                <section aria-label="Estatísticas por condição">
-                  <TabelaEstatisticas titulo="Por condição" itens={estatisticasCondicao.itens.map(i => ({...i, chave: rotularCondicao(i.chave)}))} />
-                </section>
-              )}
-              {estatisticasTempo && (
-                <section aria-label="Estatísticas por tempo">
-                  <TabelaEstatisticas titulo="Por tempo" itens={estatisticasTempo.itens.map(i => ({...i, chave: rotularTempo(Number(i.chave))}))} />
-                </section>
-              )}
-            </div>
-            
-            {estatisticasTempoCondicao && (
-              <section aria-label="Estatísticas por tempo e condição">
-                <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-4">Por tempo e condição</h2>
-                <div className="space-y-4">
-                  {['5000', '15000', '30000'].map((tempo) => {
-                    const itensDoTempo = estatisticasTempoCondicao.itens
-                      .filter((i) => i.chave.startsWith(`${tempo}_`))
-                      .map((i) => {
-                        const condicaoRestante = i.chave.substring(tempo.length + 1);
-                        return {
-                          ...i,
-                          chave: rotularCondicao(condicaoRestante),
-                        };
-                      });
-
-                    if (itensDoTempo.length === 0) return null;
-
-                    return (
-                      <details
-                        key={tempo}
-                        className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
-                      >
-                        <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
-                          {rotularTempo(Number(tempo))}
-                          <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
-                          <TabelaEstatisticas titulo="" itens={itensDoTempo} />
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-          </>
-        ) : carregando ? (
-          <IndicadorCarregamento mensagem="Carregando dados administrativos..." />
-        ) : null}
-
-        {/* Exportação CSV */}
-        {token && (
-          <div>
-            <a
-              id="btn-exportar-csv"
-              href={`${import.meta.env.VITE_URL_API ?? '/api'}/administracao/exportacao.csv`}
-              download="sentempo-resultados.csv"
-              onClick={(e) => {
-                // Usa fetch para incluir o token no header
-                e.preventDefault();
-                const url = `${import.meta.env.VITE_URL_API ?? '/api'}/administracao/exportacao.csv`;
-                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-                  .then((r) => r.blob())
-                  .then((blob) => {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'sentempo-resultados.csv';
-                    a.click();
-                  })
-                  .catch(() => alert('Erro ao exportar CSV'));
+        <div role="tablist" aria-label="Áreas da administração" className="flex border-b border-destaque-claro">
+          {([['PESQUISA', 'Pesquisa'], ['LIVRE', 'Modo livre']] as const).map(([id, rotulo], indice) => (
+            <button key={id} id={`aba-${id}`} role="tab" type="button" aria-selected={area === id} aria-controls={`painel-${id}`} tabIndex={area === id ? 0 : -1} disabled={exportando}
+              onClick={() => { definirArea(id); setDetalhe(null); definirErroExportacao(null); }}
+              onKeyDown={e => {
+                let destino: 'PESQUISA' | 'LIVRE' | null = null;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') destino = indice === 0 ? 'LIVRE' : 'PESQUISA';
+                if (e.key === 'Home') destino = 'PESQUISA';
+                if (e.key === 'End') destino = 'LIVRE';
+                if (destino) { e.preventDefault(); definirArea(destino); setDetalhe(null); definirErroExportacao(null); document.getElementById(`aba-${destino}`)?.focus(); }
               }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-destaque text-principal
-                font-medium rounded-xl hover:bg-[#00a890] transition-colors
-                focus-visible:outline-2 focus-visible:outline-destaque text-sm"
-            >
-              ↓ Exportar CSV
-            </a>
+              className={`min-h-14 flex-1 border-b-3 px-6 text-sm font-semibold transition-colors sm:flex-none ${area === id ? 'border-destaque text-principal bg-destaque-claro/20' : 'border-transparent text-texto-secundario hover:text-principal hover:bg-branco'} disabled:opacity-50`}>
+              {rotulo}
+            </button>
+          ))}
+        </div>
+        <section aria-label="Controles do painel" className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">{area === 'PESQUISA' ? 'Resultados da pesquisa' : 'Resultados dos jogos'}</h2>
+            <p className="text-sm text-texto-secundario">{area === 'PESQUISA' ? 'Sessões guiadas e respostas aos questionários.' : 'Todos os modos de jogo, incluindo o clássico e os desafios personalizados.'}</p>
           </div>
-        )}
-
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <button type="button" onClick={() => definirAtualizacao(a => a + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-destaque-claro px-4 text-sm font-medium transition-colors hover:bg-fundo">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 6a8 8 0 0 1 13 2L20 12M4 12l.9 4a8 8 0 0 0 13 2"/></svg>
+                Atualizar
+              </button>
+              <button type="button" disabled={exportando} onClick={async () => {
+                if (!token) return;
+                definirExportando(true);
+                definirErroExportacao(null);
+                try { await baixarCSV(token, area === 'LIVRE' ? 'LIVRE' : 'ESTUDO_A'); }
+                catch (e) { definirErroExportacao(e instanceof Error ? e.message : 'Falha na exportação'); }
+                finally { definirExportando(false); }
+              }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-destaque px-4 text-sm font-semibold transition-colors hover:bg-[#00a890] disabled:opacity-50">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-4"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>
+                {exportando ? 'Exportando...' : 'Exportar CSV'}
+              </button>
+            </div>
+        </section>
+        {erroExportacao && <p role="alert" className="text-sm text-red-700">{erroExportacao}</p>}
+        <div id="painel-PESQUISA" role="tabpanel" aria-labelledby="aba-PESQUISA" hidden={area !== 'PESQUISA'} tabIndex={0}>
+          {token && area === 'PESQUISA' && <AdministracaoEstudo key={`pesquisa-${atualizacao}`} token={token} />}
+        </div>
+        <div id="painel-LIVRE" role="tabpanel" aria-labelledby="aba-LIVRE" hidden={area !== 'LIVRE'} tabIndex={0} className="space-y-6">
+        {token && area === 'LIVRE' && <AdministracaoLivre key={`livre-${atualizacao}`} token={token} />}
+        {area === 'LIVRE' && <>
+        <details className="rounded-2xl border border-destaque-claro bg-branco p-4">
+          <summary className="min-h-11 cursor-pointer font-semibold">Gerenciar participantes</summary>
+          <p className="mb-4 text-sm text-texto-secundario">Consulte as contas e os resultados dos jogos de cada participante.</p>
+          {erro && <p role="alert" className="mb-4 text-sm text-red-700">{erro}</p>}
         {/* Lista de participantes */}
         {pagina && (
           <section aria-label="Participantes">
             <h2 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-4">Participantes</h2>
             <TabelaParticipantes
+              mostrarProgresso={false}
               pagina={pagina}
               onPaginar={handlePaginar}
               onBuscar={handleBuscar}
@@ -343,150 +284,34 @@ export function Administracao() {
               </div>
             </div>
 
-            {/* Combinações */}
-            <div>
-              <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Combinações</h3>
-              <div className="space-y-4">
-                {[5000, 15000, 30000].map((tempo) => {
-                  const combsDoTempo = detalhe.participante.combinacoes.filter(c => c.tempo_alvo_ms === tempo);
-                  if (combsDoTempo.length === 0) return null;
-                  return (
-                    <details
-                      key={`comb-${tempo}`}
-                      className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
-                    >
-                      <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
-                        <span>
-                          {rotularTempo(tempo)}
-                          <span className="text-texto-secundario ml-2 font-normal">
-                            - {combsDoTempo.filter(c => c.concluida).length}/{combsDoTempo.length}
-                          </span>
-                        </span>
-                        <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
-                      </summary>
-                      <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-                          {combsDoTempo.map((c) => (
-                            <div
-                              key={`${c.tempo_alvo_ms}-${c.condicao}`}
-                              className={`rounded-xl px-3 py-2 text-xs border ${
-                                c.concluida
-                                  ? 'bg-destaque-claro border-destaque text-principal'
-                                  : 'bg-fundo border-destaque-claro text-texto-secundario'
-                              }`}
-                            >
-                              <p className="font-semibold">{rotularTempo(c.tempo_alvo_ms)}</p>
-                              <p>{rotularCondicao(c.condicao)}</p>
-                              <p className="mt-1">{c.concluida ? '✓ Concluída' : 'Pendente'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </details>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Resumo individual */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-fundo rounded-xl p-3 text-center">
-                <p className="text-xs text-texto-secundario mb-1">Erro médio</p>
-                <p className="font-semibold text-principal">{formatarErro(detalhe.resumo.erro_medio_ms)}</p>
-              </div>
-              <div className="bg-fundo rounded-xl p-3 text-center">
-                <p className="text-xs text-texto-secundario mb-1">Err. abs. médio</p>
-                <p className="font-semibold text-principal">{formatarErroAbsoluto(detalhe.resumo.erro_absoluto_medio_ms)}</p>
-              </div>
-              <div className="bg-fundo rounded-xl p-3 text-center">
-                <p className="text-xs text-texto-secundario mb-1">Tendência</p>
-                <p className="font-semibold text-principal">{detalhe.resumo.tendencia.predominante}</p>
-              </div>
-            </div>
-
-            {/* Tentativas */}
-            <div>
-              <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Resultados Oficiais</h3>
-              <div className="space-y-4">
-                {[5000, 15000, 30000].map((tempo) => {
-                  const tentativasDoTempo = detalhe.participante.tentativas.filter(t => t.tempo_alvo_ms === tempo);
-                  if (tentativasDoTempo.length === 0) return null;
-                  return (
-                    <details
-                      key={`tentativas-${tempo}`}
-                      className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
-                    >
-                      <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
-                        {rotularTempo(tempo)}
-                        <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
-                      </summary>
-                      <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
-                        <div className="mt-4">
-                          <TabelaResultados
-                            tentativas={tentativasDoTempo}
-                            mostrarCabecalhosTempo={false}
-                            onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
-                          />
-                        </div>
-                      </div>
-                    </details>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Tentativas Livres */}
-            {detalhe.participante.tentativas_livres && detalhe.participante.tentativas_livres.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-texto-secundario uppercase tracking-wide mb-3">Resultados do Modo Livre</h3>
-                <div className="space-y-4">
-                  {Array.from(new Set(detalhe.participante.tentativas_livres.map(t => t.tempo_alvo_ms))).sort((a, b) => a - b).map((tempo) => {
-                    const tentativasDoTempo = detalhe.participante.tentativas_livres.filter(t => t.tempo_alvo_ms === tempo);
-                    return (
-                      <details
-                        key={`livres-${tempo}`}
-                        className="bg-branco rounded-xl border border-destaque-claro overflow-hidden group"
-                      >
-                        <summary className="px-4 py-3 cursor-pointer font-semibold text-principal flex justify-between items-center hover:bg-fundo transition-colors">
-                          {rotularTempo(tempo)}
-                          <span className="text-texto-secundario group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <div className="p-4 pt-0 border-t border-destaque-claro bg-fundo">
-                          <div className="mt-4">
-                            <TabelaResultados
-                              tentativas={tentativasDoTempo}
-                              mostrarCabecalhosTempo={false}
-                              onExcluir={(id) => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
-                            />
-                          </div>
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <TabelaResultados
+              tentativas={[...detalhe.participante.tentativas, ...(detalhe.participante.tentativas_livres ?? [])]}
+              onExcluir={id => setTentativaParaExcluir({ participanteId: detalhe.participante.id, tentativaId: id })}
+            />
           </section>
         )}
+        </details>
+        </>}
+        </div>
       </main>
 
       {/* Modais */}
       <ModalConfirmacao
         aberto={modalZerar}
-        titulo="Zerar resultados"
-        mensagem="Tem certeza que deseja apagar todos os resultados oficiais e livres deste participante?"
+        titulo="Zerar resultados dos jogos"
+        mensagem="Apagar todos os resultados dos jogos deste participante? As sessões e respostas da pesquisa serão mantidas."
         textoConfirmar="Sim, apagar tudo"
         tipo="perigo"
         onConfirmar={async () => {
-          if (!detalhe) return;
+          if (!detalhe || !token) return;
           setModalZerar(false);
           const { excluirTodas } = await import('../servicos/tentativas');
           try {
-            await excluirTodas(detalhe.participante.id);
+            await excluirTodas(detalhe.participante.id, token);
             void handleDetalhar(detalhe.participante.id);
-            void carregarResumo();
+            definirAtualizacao(a => a + 1);
             void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
-          } catch (e) {
+          } catch {
             alert('Erro ao apagar resultados');
           }
         }}
@@ -496,7 +321,7 @@ export function Administracao() {
       <ModalConfirmacao
         aberto={modalExcluirConta !== null}
         titulo="Excluir conta"
-        mensagem="ATENÇÃO: Tem certeza que deseja apagar a conta deste participante? TODOS os resultados oficiais, livres e configurações de tempos personalizados serão apagados permanentemente."
+        mensagem="ATENÇÃO: Apagar a conta deste participante? Todos os resultados dos jogos, sessões e respostas da pesquisa serão apagados permanentemente."
         textoConfirmar="Sim, excluir conta"
         tipo="perigo"
         onConfirmar={async () => {
@@ -509,9 +334,9 @@ export function Administracao() {
             if (detalhe?.participante.id === idParaExcluir) {
               setDetalhe(null);
             }
-            void carregarResumo();
+            definirAtualizacao(a => a + 1);
             void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
-          } catch (e) {
+          } catch {
             alert('Erro ao apagar conta');
           }
         }}
@@ -525,16 +350,16 @@ export function Administracao() {
         textoConfirmar="Sim, excluir"
         tipo="perigo"
         onConfirmar={async () => {
-          if (!tentativaParaExcluir || !detalhe) return;
+          if (!tentativaParaExcluir || !detalhe || !token) return;
           const { participanteId, tentativaId } = tentativaParaExcluir;
           setTentativaParaExcluir(null);
           try {
             const { excluirUma } = await import('../servicos/tentativas');
-            await excluirUma(participanteId, tentativaId);
+            await excluirUma(participanteId, tentativaId, token);
             void handleDetalhar(participanteId);
-            void carregarResumo();
+            definirAtualizacao(a => a + 1);
             void carregarParticipantes(pagina?.pagina ?? 1, 20, busca || undefined);
-          } catch (e) {
+          } catch {
             alert('Erro ao excluir resultado');
           }
         }}

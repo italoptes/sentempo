@@ -51,7 +51,7 @@ export async function prepararEstimulo(
   const sintetizador = new Tone.Synth({
     oscillator: { type: 'sine' },
     envelope: { attack: 0.01, decay: 0.1, sustain: 0.0, release: 0.1 },
-    volume: -8, // Volume mais alto para garantir clareza
+    volume: 2, // Ganho de 10 dB sobre a referência anterior de -8 dB.
   }).toDestination();
 
   function disparar() {

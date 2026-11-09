@@ -6,9 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.banco.conexao import obter_sessao
 from app.esquemas.tentativa import TentativaCriacao, TentativaResposta
+from app.nucleo.dependencias import exigir_administrador
+from app.servicos.modo_livre_servico import ModoLivreBloqueado
 from app.servicos.tentativa_servico import (
     ParticipanteNaoEncontrado,
     TentativaDuplicada,
+    TentativaNaoEncontrada,
     TentativaServico,
 )
 
@@ -31,6 +34,8 @@ async def salvar_tentativa(
         return TentativaResposta.model_validate(tentativa)
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
+    except ModoLivreBloqueado as erro:
+        raise HTTPException(status_code=403, detail="Conclua o estudo de percepção temporal e a etapa final do questionário para desbloquear o modo livre") from erro
     except TentativaDuplicada as erro:
         raise HTTPException(
             status_code=409,
@@ -41,6 +46,7 @@ async def salvar_tentativa(
 @roteador.delete(
     "/{participante_id}/tentativas",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(exigir_administrador)],
 )
 async def limpar_tentativas(
     participante_id: uuid.UUID,
@@ -55,6 +61,7 @@ async def limpar_tentativas(
 @roteador.delete(
     "/{participante_id}/tentativas/{tentativa_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(exigir_administrador)],
 )
 async def excluir_uma_tentativa(
     participante_id: uuid.UUID,
@@ -65,3 +72,5 @@ async def excluir_uma_tentativa(
         TentativaServico(sessao).excluir_uma(participante_id, tentativa_id)
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
+    except TentativaNaoEncontrada as erro:
+        raise HTTPException(status_code=404, detail="Tentativa não encontrada para este participante") from erro

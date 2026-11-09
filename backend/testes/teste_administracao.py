@@ -61,8 +61,11 @@ def test_csv_tem_bom_cabecalho_e_dados(cliente, participante, token_administrati
     )
     assert resposta.status_code == 200
     assert resposta.content.startswith(b"\xef\xbb\xbf")
-    assert "participante_id;nome;codigo;tempo_alvo_ms" in resposta.text
-    assert ";Ana Silva;0042;30000;SEM_ESTIMULO;" in resposta.text
+    assert "codigo_participante;origem;sessao_id;versao_protocolo" in resposta.text
+    assert participante["id"] in resposta.text
+    assert "ANTERIOR_V1" in resposta.text
+    assert "Ana Silva" not in resposta.text
+    assert ";0042;" not in resposta.text
 
 def test_rate_limit_admin_login(cliente):
     ip_bloqueado = "192.168.1.100"

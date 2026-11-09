@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Interfaces estendidas para suporte ao BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -11,6 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAModal() {
+  const { pathname } = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [mostrarPromptInstalacao, setMostrarPromptInstalacao] = useState(false);
   const [animando, setAnimando] = useState(false);
@@ -54,7 +56,7 @@ export function PWAModal() {
   }, []);
 
   useEffect(() => {
-    if (!mostrarPromptInstalacao) {
+    if (!mostrarPromptInstalacao || pathname === '/estudo-a') {
       focoAnteriorRef.current?.focus();
       focoAnteriorRef.current = null;
       return;
@@ -86,7 +88,7 @@ export function PWAModal() {
 
     document.addEventListener('keydown', manterFoco);
     return () => document.removeEventListener('keydown', manterFoco);
-  }, [mostrarPromptInstalacao]);
+  }, [mostrarPromptInstalacao, pathname]);
 
   const handleInstalarPWA = async () => {
     if (deferredPrompt) {
@@ -103,7 +105,7 @@ export function PWAModal() {
     }
   };
 
-  const fecharModal = () => {
+  function fecharModal() {
     setAnimando(false);
     setTimeout(() => {
       setMostrarPromptInstalacao(false);
@@ -111,11 +113,11 @@ export function PWAModal() {
     }, 300);
   };
 
-  const handleRecusarPWA = () => {
+  function handleRecusarPWA() {
     fecharModal();
   };
 
-  if (!mostrarPromptInstalacao) return null;
+  if (!mostrarPromptInstalacao || pathname === '/estudo-a') return null;
 
   return (
     <>
@@ -164,13 +166,13 @@ export function PWAModal() {
                   <svg className="w-5 h-5 text-[#00C2A8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-sm font-semibold text-slate-600">Funciona offline com sincronização posterior</span>
+                  <span className="text-sm font-semibold text-slate-600">Conexão necessária para confirmar resultados</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-[#00C2A8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-sm font-semibold text-slate-600">Registre dados mesmo sem sinal de internet</span>
+                  <span className="text-sm font-semibold text-slate-600">Retome sua participação com os dados já confirmados</span>
                 </li>
               </ul>
             ) : (

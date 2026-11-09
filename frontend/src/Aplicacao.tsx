@@ -4,13 +4,15 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { usarParticipante } from './ganchos/usarParticipante';
 import { Entrada } from './paginas/Entrada';
 import { Inicio } from './paginas/Inicio';
-import { Experimento } from './paginas/Experimento';
 import { ExperimentoLivre } from './paginas/ExperimentoLivre';
 import { Administracao } from './paginas/Administracao';
 import { PWAModal } from './componentes/PWAModal';
 import { TituloPagina } from './componentes/TituloPagina';
 import { IndicadorCarregamento } from './componentes/IndicadorCarregamento';
 import { GerenciadorFocoRota } from './componentes/GerenciadorFocoRota';
+import { EstudoA } from './paginas/EstudoA';
+import { ModoLivre } from './paginas/ModoLivre';
+import { AcessoModoLivre } from './componentes/AcessoModoLivre';
 
 export function Aplicacao() {
   const {
@@ -70,35 +72,16 @@ export function Aplicacao() {
           }
         />
 
-        {/* Experimento */}
-        <Route
-          path="/experimento/:tempo/:condicao"
-          element={
-            !participanteId ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Experimento
-                participanteId={participanteId}
-                onRecarregar={recarregar}
-              />
-            )
-          }
-        />
+        <Route path="/estudo-a" element={participanteId ? <EstudoA participanteId={participanteId} /> : <Navigate to="/" replace />} />
 
-        {/* Experimento Livre */}
-        <Route
-          path="/experimento-livre/:id/:tempo/:condicao"
-          element={
-            !participanteId ? (
-              <Navigate to="/" replace />
-            ) : (
-              <ExperimentoLivre
-                participanteId={participanteId}
-                onRecarregar={recarregar}
-              />
-            )
-          }
-        />
+        {/* Links antigos levam à área de jogo, sem registrar novas tentativas oficiais. */}
+        <Route path="/experimento/:tempo/:condicao" element={<Navigate to="/modo-livre" replace />} />
+
+        {/* A página de jogo e suas partidas exigem pesquisa concluída. */}
+        <Route element={participanteId ? <AcessoModoLivre participanteId={participanteId} /> : <Navigate to="/" replace />}>
+          <Route path="/modo-livre" element={detalhe ? <ModoLivre participante={detalhe} onRecarregar={recarregar} /> : <IndicadorCarregamento mensagem="Carregando perfil..." />} />
+          <Route path="/experimento-livre/:id/:tempo/:condicao" element={participanteId ? <ExperimentoLivre participanteId={participanteId} onRecarregar={recarregar} /> : <Navigate to="/" replace />} />
+        </Route>
 
         {/* Administração */}
         <Route path="/administracao" element={<Administracao />} />

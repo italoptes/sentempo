@@ -8,6 +8,7 @@ from app.entidades.tentativa import Tentativa
 from app.esquemas.tentativa import TentativaCriacao
 from app.repositorios.participantes import RepositorioParticipantes
 from app.repositorios.tentativas import RepositorioTentativas
+from app.servicos.modo_livre_servico import ModoLivreBloqueado, ModoLivreServico
 
 
 class ParticipanteNaoEncontrado(Exception):
@@ -15,6 +16,10 @@ class ParticipanteNaoEncontrado(Exception):
 
 
 class TentativaDuplicada(Exception):
+    pass
+
+
+class TentativaNaoEncontrada(Exception):
     pass
 
 
@@ -37,6 +42,8 @@ class TentativaServico:
             ):
                 raise TentativaDuplicada
         else:
+            if not ModoLivreServico(self.sessao).esta_desbloqueado(participante_id):
+                raise ModoLivreBloqueado
             # Para tentativas personalizadas, verificar se o tempo_personalizado_id existe e pertence ao participante
             from app.repositorios.tempos_personalizados import RepositorioTemposPersonalizados
             repo_tempos = RepositorioTemposPersonalizados(self.sessao)
@@ -79,9 +86,9 @@ class TentativaServico:
         if participante is None:
             raise ParticipanteNaoEncontrado
             
-        # Opcionalmente, pode verificar se a tentativa pertence mesmo ao participante.
-        # Por simplicidade e segurança, podemos checar se apagou algo.
-        apagados = self.tentativas.excluir_uma(tentativa_id)
+        apagados = self.tentativas.excluir_uma(participante_id, tentativa_id)
         if apagados > 0:
             self.sessao.commit()
+        else:
+            raise TentativaNaoEncontrada
 

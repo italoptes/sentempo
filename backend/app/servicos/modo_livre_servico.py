@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from app.entidades.tempo_personalizado import TempoPersonalizado
-from app.entidades.tentativa import Tentativa, TipoTentativa
+from app.entidades.estudo import SessaoEstudo
+from app.servicos.estudo_servico import VERSAO
 from app.esquemas.modo_livre import TempoPersonalizadoCriacao, ModoLivreStatus, TempoPersonalizadoResposta
 from app.repositorios.participantes import RepositorioParticipantes
 from app.repositorios.tempos_personalizados import RepositorioTemposPersonalizados
@@ -40,14 +41,13 @@ class ModoLivreServico:
     def esta_desbloqueado(self, participante_id: uuid.UUID) -> bool:
         self._verificar_participante(participante_id)
 
-        consulta = select(Tentativa.tempo_alvo_ms).where(
-            Tentativa.participante_id == participante_id,
-            Tentativa.tipo_tentativa == TipoTentativa.OFICIAL,
-            Tentativa.tempo_alvo_ms.in_([15000, 30000])
-        ).distinct()
-
-        tempos_realizados = set(self.sessao.scalars(consulta).all())
-        return {15000, 30000}.issubset(tempos_realizados)
+        # A data de conclusão só é gravada após as tentativas e o questionário final.
+        consulta = select(SessaoEstudo.id).where(
+            SessaoEstudo.participante_id == participante_id,
+            SessaoEstudo.versao_protocolo == VERSAO,
+            SessaoEstudo.concluida_em.is_not(None),
+        )
+        return self.sessao.scalar(consulta) is not None
 
     def obter_status(self, participante_id: uuid.UUID) -> ModoLivreStatus:
         desbloqueado = self.esta_desbloqueado(participante_id)

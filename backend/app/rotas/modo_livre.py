@@ -48,7 +48,7 @@ async def criar_tempo_personalizado(
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
     except ModoLivreBloqueado as erro:
-        raise HTTPException(status_code=403, detail="Modo livre ainda está bloqueado para este participante") from erro
+        raise HTTPException(status_code=403, detail="Conclua o estudo de percepção temporal e a etapa final do questionário para desbloquear o modo livre") from erro
     except TempoPersonalizadoDuplicado as erro:
         raise HTTPException(status_code=409, detail="Este tempo já foi criado e está ativo") from erro
 
