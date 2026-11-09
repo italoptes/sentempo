@@ -118,33 +118,37 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
   const protegida = ['ativa', 'preparando', 'salvando', 'confirmacao'].includes(rodada.estado);
   return (
     <div className={`min-h-screen ${ativa ? 'bg-principal text-branco' : 'bg-fundo text-principal'}`}>
-      <main id="conteudo-principal" tabIndex={-1} className={`max-w-2xl mx-auto px-5 py-10 space-y-6 ${sessao?.situacao === 'CONCLUIDA' ? 'lg:max-w-6xl lg:px-8 lg:py-12' : ''}`}>
+      <main id="conteudo-principal" tabIndex={-1} className={`max-w-2xl mx-auto px-5 py-10 space-y-6 ${(!sessao && consultaConfirmada) || sessao?.situacao === 'CONCLUIDA' ? 'lg:max-w-6xl lg:px-8 lg:py-12' : ''}`}>
         {!protegida && <Link to="/inicio" className="inline-flex min-h-11 items-center underline">Voltar ao início</Link>}
         <h1 ref={tituloRef} tabIndex={-1} className="text-2xl font-semibold">
           {ativa ? 'Em andamento' : rodada.estado === 'interrompida' ? 'Tentativa interrompida' : 'Estudo de percepção temporal'}
         </h1>
         {erro && <p role="alert" className="rounded-xl border border-red-700 p-4">{erro} <button className="underline min-h-11" onClick={() => void carregar()}>Consultar sessão</button></p>}
         {carregando ? <IndicadorCarregamento mensagem="Consultando sessão..." /> : !consultaConfirmada ? null : !sessao ? (
-          <section className="bg-branco rounded-2xl p-6 space-y-5 border border-destaque-claro">
-            <p>Você vai estimar intervalos de 5, 10 e 15 segundos, uma vez em cada condição: silêncio, bipes lentos e bipes rápidos. São três blocos de três tentativas, totalizando 9 tentativas.</p>
-            <p>Antes de cada tentativa, informaremos o tempo-alvo. Toque em Finalizar quando acreditar que esse intervalo terminou. Estime sem contar segundos nem usar os bipes como contagem.</p>
-            <p>A participação é voluntária. Você pode interromper ou sair a qualquer momento. Guardaremos suas respostas com um identificador, a categoria de dispositivo e o uso declarado de fones para análise acadêmica. Há pausas livres entre blocos.</p>
-            <label className="flex gap-3 items-start min-h-12"><input type="checkbox" checked={consentimento} onChange={e => definirConsentimento(e.target.checked)} className="mt-1 h-5 w-5" />Li a explicação e concordo em participar.</label>
-            <label className="block">Dispositivo usado
-              <select value={dispositivo} onChange={e => definirDispositivo(e.target.value as ContextoEstudo['dispositivo'])} className="block w-full border border-borda-controle rounded-lg p-3 mt-2">
-                <option value="COMPUTADOR">Computador</option><option value="CELULAR">Celular</option><option value="TABLET">Tablet</option><option value="OUTRO">Outro</option>
-              </select>
-            </label>
-            <label className="block">Está usando fones de ouvido?
-              <select value={fones} onChange={e => definirFones(e.target.value)} className="block w-full border border-borda-controle rounded-lg p-3 mt-2"><option value="">Selecione</option><option value="sim">Sim</option><option value="nao">Não</option></select>
-            </label>
-            <p>Fones são recomendados. Ajuste também o volume do dispositivo para um nível confortável e mantenha-o durante a sessão.</p>
-            <label className="block">Volume do teste e das tentativas
-              <input aria-label="Volume do teste e das tentativas" type="range" min="0.1" max="1" step="0.05" value={volume} disabled={testando} onChange={e => { definirVolume(Number(e.target.value)); definirAudioOuvido(false); definirReproduziu(false); }} className="block w-full min-h-11" />
-            </label>
-            <button className={botao} disabled={testando} onClick={() => void testarAudio()}>{testando ? 'Reproduzindo teste...' : 'Testar áudio'}</button>
-            {reproduziu && <label className="flex gap-3 min-h-12 items-center"><input type="checkbox" checked={audioOuvido} onChange={e => definirAudioOuvido(e.target.checked)} className="h-5 w-5" />Ouvi os bipes em volume confortável.</label>}
-            <button className={`${botao} block w-full`} disabled={!consentimento || !fones || !audioOuvido || testando || ocupado} onClick={() => void participar()}>Iniciar participação</button>
+          <section className="bg-branco rounded-2xl p-6 space-y-5 border border-destaque-claro lg:grid lg:grid-cols-2 lg:gap-10 lg:space-y-0 lg:p-10">
+            <div className="space-y-5">
+              <p>Você vai estimar intervalos de 5, 10 e 15 segundos, uma vez em cada condição: silêncio, bipes lentos e bipes rápidos. São três blocos de três tentativas, totalizando 9 tentativas.</p>
+              <p>Antes de cada tentativa, informaremos o tempo-alvo. Toque em Finalizar quando acreditar que esse intervalo terminou. Estime sem contar segundos nem usar os bipes como contagem.</p>
+              <p>A participação é voluntária. Você pode interromper ou sair a qualquer momento. Guardaremos suas respostas com um identificador, a categoria de dispositivo e o uso declarado de fones para análise acadêmica. Há pausas livres entre blocos.</p>
+              <label className="flex gap-3 items-start min-h-12"><input type="checkbox" checked={consentimento} onChange={e => definirConsentimento(e.target.checked)} className="mt-1 h-5 w-5" />Li a explicação e concordo em participar.</label>
+            </div>
+            <div className="space-y-5">
+              <label className="block">Dispositivo usado
+                <select value={dispositivo} onChange={e => definirDispositivo(e.target.value as ContextoEstudo['dispositivo'])} className="block w-full border border-borda-controle rounded-lg p-3 mt-2">
+                  <option value="COMPUTADOR">Computador</option><option value="CELULAR">Celular</option><option value="TABLET">Tablet</option><option value="OUTRO">Outro</option>
+                </select>
+              </label>
+              <label className="block">Está usando fones de ouvido?
+                <select value={fones} onChange={e => definirFones(e.target.value)} className="block w-full border border-borda-controle rounded-lg p-3 mt-2"><option value="">Selecione</option><option value="sim">Sim</option><option value="nao">Não</option></select>
+              </label>
+              <p>Fones são recomendados. Ajuste também o volume do dispositivo para um nível confortável e mantenha-o durante a sessão.</p>
+              <label className="block">Volume do teste e das tentativas
+                <input aria-label="Volume do teste e das tentativas" type="range" min="0.1" max="1" step="0.05" value={volume} disabled={testando} onChange={e => { definirVolume(Number(e.target.value)); definirAudioOuvido(false); definirReproduziu(false); }} className="block w-full min-h-11" />
+              </label>
+              <button className={botao} disabled={testando} onClick={() => void testarAudio()}>{testando ? 'Reproduzindo teste...' : 'Testar áudio'}</button>
+              {reproduziu && <label className="flex gap-3 min-h-12 items-center"><input type="checkbox" checked={audioOuvido} onChange={e => definirAudioOuvido(e.target.checked)} className="h-5 w-5" />Ouvi os bipes em volume confortável.</label>}
+              <button className={`${botao} block w-full`} disabled={!consentimento || !fones || !audioOuvido || testando || ocupado} onClick={() => void participar()}>Iniciar participação</button>
+            </div>
           </section>
         ) : rodada.estado === 'preparando' || rodada.estado === 'salvando' ? (
           <p role="status">{rodada.estado === 'preparando' ? 'Preparando áudio...' : 'Confirmando salvamento...'}</p>
@@ -159,7 +163,14 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
         ) : sessao.questionario_pendente ? (
           <QuestionarioEstudo key={`${sessao.questionario_pendente.tipo}-${sessao.questionario_pendente.tentativa_id ?? sessao.questionario_pendente.bloco ?? 'final'}`} pergunta={sessao.questionario_pendente} ocupado={ocupado} aoConfirmar={responder} />
         ) : sessao.situacao === 'CONCLUIDA' ? (
-          <ResultadosEstudo sessao={sessao} />
+          <div className="space-y-7">
+            <ResultadosEstudo sessao={sessao} />
+            <div className="rounded-2xl border border-destaque-claro bg-branco p-6 space-y-4">
+              <h2 className="text-xl font-semibold">Modo livre desbloqueado!</h2>
+              <p>Agora é hora de brincar com o tempo. Crie seus desafios e chame os amigos para ver quem chega mais perto do alvo.</p>
+              <Link to="/modo-livre" className="inline-flex min-h-12 items-center rounded-xl bg-destaque px-6 py-3 font-semibold">Jogar modo livre</Link>
+            </div>
+          </div>
         ) : sessao.situacao === 'INTERVALO' ? (
           <section className="space-y-5"><h2 className="text-xl font-semibold">Bloco {sessao.bloco_liberado} concluído</h2><p>Descanse o quanto quiser. Quando estiver pronto, continue para o próximo bloco.</p><p>{sessao.concluidas} de {sessao.total} tentativas concluídas.</p><button className={botao} disabled={ocupado} onClick={() => void continuar()}>Continuar</button></section>
         ) : sessao.proxima ? (

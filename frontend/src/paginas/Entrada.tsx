@@ -48,14 +48,20 @@ export function Entrada({ onParticipanteDefinido }: Props) {
 
   return (
     <div id="conteudo-principal" tabIndex={-1} className="min-h-screen bg-fundo flex flex-col items-center justify-center px-4 py-12 pagina-entrar">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-8 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 lg:space-y-0">
         {/* Logo */}
-        <div className="text-center">
+        <div className="text-center lg:text-left">
           <img
             src="/images/logo_principal.png"
             alt="Sentempo — Sinta o Tempo"
-            className="h-16 mx-auto object-contain"
+            className="h-16 mx-auto object-contain lg:mx-0 lg:h-20"
           />
+          <div className="hidden lg:block lg:mt-10 lg:space-y-6">
+            <p className="text-sm font-semibold uppercase tracking-widest text-texto-secundario">Sinta o tempo</p>
+            <h2 className="text-4xl font-semibold leading-tight text-principal">Como você percebe<br />a passagem do tempo?</h2>
+            <p className="max-w-sm leading-relaxed text-texto-secundario">Participe do estudo de percepção temporal e explore suas estimativas em diferentes condições sonoras.</p>
+            <p className="text-sm text-texto-secundario">Prepare seus fones e escolha um ambiente tranquilo.</p>
+          </div>
         </div>
 
         {/* Card de acesso */}

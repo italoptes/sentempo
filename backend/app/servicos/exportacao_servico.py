@@ -35,8 +35,9 @@ class ExportacaoServico:
         escritor = csv.DictWriter(arquivo, fieldnames=CABECALHO, delimiter=";", lineterminator="\n")
         escritor.writeheader()
         if origem in ("ANTERIOR", "LIVRE"):
-            tipo = TipoTentativa.OFICIAL if origem == "ANTERIOR" else TipoTentativa.PERSONALIZADA
-            consulta = select(Tentativa).where(Tentativa.tipo_tentativa == tipo).order_by(Tentativa.criado_em, Tentativa.id)
+            consulta = select(Tentativa).order_by(Tentativa.criado_em, Tentativa.id)
+            if origem == "ANTERIOR":
+                consulta = consulta.where(Tentativa.tipo_tentativa == TipoTentativa.OFICIAL)
             for t in self.sessao.scalars(consulta):
                 escritor.writerow({"codigo_participante": str(t.participante_id), "origem": origem,
                     "versao_protocolo": "ANTERIOR_V1" if origem == "ANTERIOR" else "MODO_LIVRE",

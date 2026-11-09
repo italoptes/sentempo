@@ -23,6 +23,7 @@ from app.servicos.estatisticas_servico import EstatisticasServico
 from app.servicos.exportacao_servico import ExportacaoServico
 from app.servicos.participante_servico import ParticipanteServico
 from app.servicos.relatorio_estudo_servico import RelatorioEstudoServico
+from app.servicos.relatorio_livre_servico import RelatorioLivreServico
 from app.servicos.estudo_servico import VERSAO
 
 
@@ -136,6 +137,15 @@ async def exportar_csv(
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": 'attachment; filename="sentempo-resultados.csv"'},
     )
+
+
+@roteador.get("/modo-livre", dependencies=[Depends(exigir_administrador)])
+def painel_modo_livre(
+    sessao: Annotated[Session, Depends(obter_sessao)],
+    pagina: Annotated[int, Query(ge=1)] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 10,
+) -> dict:
+    return RelatorioLivreServico(sessao).painel(pagina, tamanho)
 
 
 @roteador.get("/estudo-a", dependencies=[Depends(exigir_administrador)])

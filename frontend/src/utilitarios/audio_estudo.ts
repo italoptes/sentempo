@@ -12,7 +12,7 @@ export async function prepararAudioEstudo(condicao: CondicaoEstudo, volume: numb
   const sintetizador = new Tone.Synth({
     oscillator: { type: 'sine' },
     envelope: { attack: 0.005, decay: 0.025, sustain: 0, release: 0.015 },
-    volume: -12 + 20 * Math.log10(Math.max(0.1, Math.min(1, volume))),
+    volume: -2 + 20 * Math.log10(Math.max(0.1, Math.min(1, volume))), // Ganho de 10 dB sobre a referência de -12 dB.
   }).toDestination();
   let encerrado = false;
   const ritmo = criarRitmoFixo(condicao === 'LENTO' ? 1 : 0.5,

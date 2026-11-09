@@ -181,3 +181,26 @@ npm run build
 Para disponibilizar localmente, aplicar `alembic upgrade head` antes de iniciar
 a API. A migração não é aplicada no banco real durante os testes. O Compose já
 executa migrações no script de inicialização do backend.
+
+## Desbloqueio do modo livre
+
+A tela inicial separa a pesquisa do jogo em dois cards. O modo livre é uma área
+própria em `/modo-livre`, voltada a desafios por diversão e partidas com amigos.
+O card explicita o bloqueio e convida a concluir a pesquisa para jogar.
+
+O acesso é liberado somente após concluir o Estudo A atual (V2): as 9 tentativas,
+os questionários das tentativas e dos blocos e o encerramento do questionário
+final. A opção de preferir não responder permanece válida. A conclusão é
+confirmada pelo servidor; atividades do protocolo anterior e coletas V1 não
+desbloqueiam o jogo. A API também bloqueia a criação de tempos e o salvamento
+de partidas livres antes da conclusão, inclusive com tempos antigos salvos.
+As partidas livres não alteram os dados da pesquisa.
+
+A área de jogo oferece o modo clássico (5, 10 e 15 segundos, nas três condições)
+e o modo livre com tempos personalizados. Ambos usam partidas livres, repetíveis,
+sem gravar tentativas oficiais nem modificar a sessão da pesquisa. Os tempos
+clássicos são criados ou reutilizados na mesma base de tempos do jogo. Os resultados do protocolo
+antigo aparecem junto às demais partidas em “Seus resultados” no modo livre,
+sem uma seção separada na tela inicial. Os registros históricos são preservados;
+seus links de partida levam à área de jogo. O modo livre informa explicitamente
+que é fora do estudo, apenas para brincar.

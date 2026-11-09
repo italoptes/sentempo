@@ -60,6 +60,12 @@ body {
   box-shadow: none;
 }
 
+/* O foco de navegação não deve desenhar uma borda ao redor da página inteira. */
+#conteudo-principal:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .link-pular-conteudo {
   position: fixed;
   top: 0.75rem;
@@ -123,5 +129,25 @@ body {
 
   .tutorial-etapa {
     animation: none;
+  }
+}
+
+/* O fluxo de deslizar permanece no celular; no desktop, as etapas ficam visíveis. */
+@media (min-width: 64rem) {
+  .desafio-paginas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    touch-action: auto;
+  }
+
+  .desafio-pagina {
+    min-width: 0;
+  }
+
+  .desafio-pagina .grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.banco.conexao import obter_sessao
 from app.esquemas.tentativa import TentativaCriacao, TentativaResposta
 from app.nucleo.dependencias import exigir_administrador
+from app.servicos.modo_livre_servico import ModoLivreBloqueado
 from app.servicos.tentativa_servico import (
     ParticipanteNaoEncontrado,
     TentativaDuplicada,
@@ -33,6 +34,8 @@ async def salvar_tentativa(
         return TentativaResposta.model_validate(tentativa)
     except ParticipanteNaoEncontrado as erro:
         raise HTTPException(status_code=404, detail="Participante não encontrado") from erro
+    except ModoLivreBloqueado as erro:
+        raise HTTPException(status_code=403, detail="Conclua o estudo de percepção temporal e a etapa final do questionário para desbloquear o modo livre") from erro
     except TentativaDuplicada as erro:
         raise HTTPException(
             status_code=409,

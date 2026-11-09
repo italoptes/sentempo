@@ -5,7 +5,8 @@ function obterTitulo(caminho: string): string {
   if (caminho === '/') return 'Entrar no experimento — Sentempo';
   if (caminho === '/inicio') return 'Início — Sentempo';
   if (caminho === '/estudo-a') return 'Estudo de percepção temporal — Sentempo';
-  if (caminho.startsWith('/experimento-livre/')) return 'Experimento livre — Sentempo';
+  if (caminho === '/modo-livre') return 'Jogar modo livre — Sentempo';
+  if (caminho.startsWith('/experimento-livre/')) return 'Partida do modo livre — Sentempo';
   if (caminho.startsWith('/experimento/')) return 'Preparação do experimento — Sentempo';
   if (caminho === '/administracao') return 'Administração — Sentempo';
   return 'Sentempo';

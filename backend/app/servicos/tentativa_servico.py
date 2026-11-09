@@ -8,6 +8,7 @@ from app.entidades.tentativa import Tentativa
 from app.esquemas.tentativa import TentativaCriacao
 from app.repositorios.participantes import RepositorioParticipantes
 from app.repositorios.tentativas import RepositorioTentativas
+from app.servicos.modo_livre_servico import ModoLivreBloqueado, ModoLivreServico
 
 
 class ParticipanteNaoEncontrado(Exception):
@@ -41,6 +42,8 @@ class TentativaServico:
             ):
                 raise TentativaDuplicada
         else:
+            if not ModoLivreServico(self.sessao).esta_desbloqueado(participante_id):
+                raise ModoLivreBloqueado
             # Para tentativas personalizadas, verificar se o tempo_personalizado_id existe e pertence ao participante
             from app.repositorios.tempos_personalizados import RepositorioTemposPersonalizados
             repo_tempos = RepositorioTemposPersonalizados(self.sessao)
