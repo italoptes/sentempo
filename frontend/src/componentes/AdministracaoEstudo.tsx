@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { requisicao } from '../servicos/api';
 import { baixarCSV } from '../servicos/administracao';
 import type { OrigemExportacao } from '../servicos/administracao';
-import type { SessaoEstudo } from '../servicos/estudo';
+import type { SessaoEstudo, VersaoEstudo } from '../servicos/estudo';
 import { rotularCondicaoEstudo } from '../servicos/estudo';
 import { formatarErro, formatarSegundos } from '../utilitarios/formatacao';
 
@@ -21,6 +21,7 @@ interface PainelEstudo {
 export function AdministracaoEstudo({ token }: { token: string }) {
   const [painel, definirPainel] = useState<PainelEstudo | null>(null);
   const [pagina, definirPagina] = useState(1);
+  const [versao, definirVersao] = useState<VersaoEstudo>('ESTUDO_A_V2');
   const [erro, definirErro] = useState<string | null>(null);
   const [carregando, definirCarregando] = useState(true);
   const [exportando, definirExportando] = useState(false);
@@ -28,19 +29,25 @@ export function AdministracaoEstudo({ token }: { token: string }) {
   const carregar = useCallback(async () => {
     definirCarregando(true);
     definirErro(null);
-    try { definirPainel(await requisicao<PainelEstudo>(`/administracao/estudo-a?pagina=${pagina}&tamanho=10`, { token })); }
+    try { definirPainel(await requisicao<PainelEstudo>(`/administracao/estudo-a?pagina=${pagina}&tamanho=10&versao=${versao}`, { token })); }
     catch { definirErro('Não foi possível consultar o Estudo A. Verifique sua sessão.'); }
     finally { definirCarregando(false); }
-  }, [pagina, token]);
+  }, [pagina, token, versao]);
   useEffect(() => {
     let presente = true;
-    requisicao<PainelEstudo>(`/administracao/estudo-a?pagina=${pagina}&tamanho=10`, { token })
+    requisicao<PainelEstudo>(`/administracao/estudo-a?pagina=${pagina}&tamanho=10&versao=${versao}`, { token })
       .then(p => { if (presente) { definirPainel(p); definirCarregando(false); } })
       .catch(() => { if (presente) { definirErro('Não foi possível consultar o Estudo A. Verifique sua sessão.'); definirCarregando(false); } });
     return () => { presente = false; };
-  }, [pagina, token]);
+  }, [pagina, token, versao]);
   return <section aria-labelledby="titulo-painel-estudo" className="space-y-5">
-    <h2 id="titulo-painel-estudo" className="text-xl font-semibold">Estudo A — ESTUDO_A_V1</h2>
+    <h2 id="titulo-painel-estudo" className="text-xl font-semibold">Estudo A — {versao}</h2>
+    <label className="block">Versão do Estudo A
+      <select value={versao} onChange={e => { definirVersao(e.target.value as VersaoEstudo); definirPagina(1); definirPainel(null); definirCarregando(true); }} className="border border-borda-controle rounded-lg p-3 ml-2">
+        <option value="ESTUDO_A_V2">V2 — 9 tentativas (atual)</option>
+        <option value="ESTUDO_A_V1">V1 — 27 tentativas (histórico)</option>
+      </select>
+    </label>
     <div className="flex flex-wrap items-center gap-3">
       <button className="min-h-11 underline" disabled={carregando} onClick={() => void carregar()}>Atualizar Estudo A</button>
       <label>Base para exportação
@@ -50,14 +57,14 @@ export function AdministracaoEstudo({ token }: { token: string }) {
       </label>
       <button className="min-h-12 bg-destaque text-principal font-medium rounded-xl px-4" disabled={exportando} onClick={async () => {
         definirExportando(true);
-        try { await baixarCSV(token, origem); } catch (e) { definirErro(e instanceof Error ? e.message : 'Falha na exportação'); }
+        try { await baixarCSV(token, origem, versao); } catch (e) { definirErro(e instanceof Error ? e.message : 'Falha na exportação'); }
         finally { definirExportando(false); }
       }}>{exportando ? 'Exportando...' : 'Exportar base selecionada'}</button>
     </div>
-    <p className="text-sm text-texto-secundario">As bases são exportadas separadamente, com pseudônimo em UUID, sem nome nem código de acesso. O modo livre não integra as estatísticas oficiais.</p>
+    <p className="text-sm text-texto-secundario">As bases e versões são exportadas separadamente, com pseudônimo em UUID, sem nome nem código de acesso. No Estudo A, a exportação usa a versão selecionada acima. O modo livre não integra as estatísticas oficiais.</p>
     {erro && <p role="alert">{erro}</p>}
     {carregando && <p role="status">Consultando Estudo A...</p>}
-    {painel && <>
+    {painel && painel.versao_protocolo === versao && <>
       <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[['Sessões', painel.sessoes_total], ['Sessões completas', painel.sessoes_completas], ['Tentativas confirmadas', painel.tentativas_concluidas]].map(([rotulo, valor]) => <div key={rotulo} className="bg-branco border border-destaque-claro rounded-xl p-4"><dt>{rotulo}</dt><dd className="text-2xl font-semibold">{valor}</dd></div>)}
       </dl>
@@ -72,7 +79,7 @@ export function AdministracaoEstudo({ token }: { token: string }) {
       </div> : <p>Nenhuma tentativa confirmada no Estudo A.</p>}
       <h3 className="font-semibold">Sessões e respostas</h3>
       {painel.sessoes.map(s => <details key={s.id} className="border border-borda-controle rounded-xl p-4 bg-branco">
-        <summary className="min-h-12 cursor-pointer break-words">Participante {s.codigo_participante} — {s.concluidas}/27 — {s.situacao.replaceAll('_', ' ').toLowerCase()}</summary>
+        <summary className="min-h-12 cursor-pointer break-words">Participante {s.codigo_participante} — {s.concluidas}/{s.total} — {s.situacao.replaceAll('_', ' ').toLowerCase()}</summary>
         <div className="space-y-3 mt-4">
           <p className="break-all">Sessão: {s.id} · sequência {s.sequencia + 1}</p>
           <p>Ordem: {s.ordem_condicoes.map(rotularCondicaoEstudo).join(' → ')}</p>

@@ -8,6 +8,7 @@ import type {
   TokenResposta,
 } from '../tipos/administracao';
 import { requisicao } from './api';
+import type { VersaoEstudo } from './estudo';
 
 export async function loginAdministracao(
   nome: string,
@@ -55,14 +56,15 @@ export async function detalharParticipante(
 }
 
 export type OrigemExportacao = 'ANTERIOR' | 'ESTUDO_A' | 'LIVRE';
-export async function baixarCSV(token: string, origem: OrigemExportacao): Promise<void> {
+export async function baixarCSV(token: string, origem: OrigemExportacao, versao: VersaoEstudo = 'ESTUDO_A_V2'): Promise<void> {
   const base = import.meta.env.VITE_URL_API ?? '/api';
-  const resposta = await fetch(`${base}/administracao/exportacao.csv?origem=${origem}`, { headers: { Authorization: `Bearer ${token}` } });
+  const filtroVersao = origem === 'ESTUDO_A' ? `&versao=${versao}` : '';
+  const resposta = await fetch(`${base}/administracao/exportacao.csv?origem=${origem}${filtroVersao}`, { headers: { Authorization: `Bearer ${token}` } });
   if (!resposta.ok) throw new Error(`Não foi possível exportar (HTTP ${resposta.status}). Verifique sua sessão.`);
   const url = URL.createObjectURL(await resposta.blob());
   const link = document.createElement('a');
   link.href = url;
-  link.download = `sentempo-${origem.toLowerCase()}.csv`;
+  link.download = `sentempo-${origem === 'ESTUDO_A' ? versao.toLowerCase() : origem.toLowerCase()}.csv`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

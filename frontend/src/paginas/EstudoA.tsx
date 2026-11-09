@@ -113,6 +113,8 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
   }
 
   const ativa = rodada.estado === 'ativa';
+  const totalBlocoAtual = sessao?.blocos.find(b => b.posicao === sessao.proxima?.bloco)?.total
+    ?? (sessao ? sessao.total / sessao.ordem_condicoes.length : 3);
   const protegida = ['ativa', 'preparando', 'salvando', 'confirmacao'].includes(rodada.estado);
   return (
     <div className={`min-h-screen ${ativa ? 'bg-principal text-branco' : 'bg-fundo text-principal'}`}>
@@ -124,7 +126,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
         {erro && <p role="alert" className="rounded-xl border border-red-700 p-4">{erro} <button className="underline min-h-11" onClick={() => void carregar()}>Consultar sessão</button></p>}
         {carregando ? <IndicadorCarregamento mensagem="Consultando sessão..." /> : !consultaConfirmada ? null : !sessao ? (
           <section className="bg-branco rounded-2xl p-6 space-y-5 border border-destaque-claro">
-            <p>Você vai estimar intervalos de 5, 10 e 15 segundos em três blocos, totalizando 27 tentativas. Algumas terão bipes e outras serão silenciosas.</p>
+            <p>Você vai estimar intervalos de 5, 10 e 15 segundos, uma vez em cada condição: silêncio, bipes lentos e bipes rápidos. São três blocos de três tentativas, totalizando 9 tentativas.</p>
             <p>Antes de cada tentativa, informaremos o tempo-alvo. Toque em Finalizar quando acreditar que esse intervalo terminou. Estime sem contar segundos nem usar os bipes como contagem.</p>
             <p>A participação é voluntária. Você pode interromper ou sair a qualquer momento. Guardaremos suas respostas com um identificador, a categoria de dispositivo e o uso declarado de fones para análise acadêmica. Há pausas livres entre blocos.</p>
             <label className="flex gap-3 items-start min-h-12"><input type="checkbox" checked={consentimento} onChange={e => definirConsentimento(e.target.checked)} className="mt-1 h-5 w-5" />Li a explicação e concordo em participar.</label>
@@ -157,7 +159,7 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
         ) : sessao.questionario_pendente ? (
           <QuestionarioEstudo key={`${sessao.questionario_pendente.tipo}-${sessao.questionario_pendente.tentativa_id ?? sessao.questionario_pendente.bloco ?? 'final'}`} pergunta={sessao.questionario_pendente} ocupado={ocupado} aoConfirmar={responder} />
         ) : sessao.situacao === 'CONCLUIDA' ? (
-          <section className="space-y-5"><h2 className="text-xl font-semibold">As 27 tentativas foram concluídas</h2><p>Obrigado por participar. O estudo compara estimativas de duração em silêncio e com dois ritmos de bipes. Diferenças nas respostas não medem diretamente atenção ou concentração e não comprovam, por si, um efeito de nudge.</p>
+          <section className="space-y-5"><h2 className="text-xl font-semibold">As {sessao.total} tentativas foram concluídas</h2><p>Obrigado por participar. O estudo compara estimativas de duração em silêncio e com dois ritmos de bipes. Diferenças nas respostas não medem diretamente atenção ou concentração e não comprovam, por si, um efeito de nudge.</p>
             <details><summary className="min-h-11 cursor-pointer underline">Ver meus resultados</summary>
               <p className="my-4">Parada antecipada (erro negativo) é compatível com superestimação da duração transcorrida. Parada tardia (erro positivo), com subestimação.</p>
               <ol className="space-y-3">{sessao.tentativas.map(t => <li key={t.id} className="rounded-xl border border-borda-controle bg-branco p-4">
@@ -167,15 +169,15 @@ export function EstudoA({ participanteId }: { participanteId: string }) {
             </details>
           </section>
         ) : sessao.situacao === 'INTERVALO' ? (
-          <section className="space-y-5"><h2 className="text-xl font-semibold">Bloco {sessao.bloco_liberado} concluído</h2><p>Descanse o quanto quiser. Quando estiver pronto, continue para o próximo bloco.</p><p>{sessao.concluidas} de 27 tentativas concluídas.</p><button className={botao} disabled={ocupado} onClick={() => void continuar()}>Continuar</button></section>
+          <section className="space-y-5"><h2 className="text-xl font-semibold">Bloco {sessao.bloco_liberado} concluído</h2><p>Descanse o quanto quiser. Quando estiver pronto, continue para o próximo bloco.</p><p>{sessao.concluidas} de {sessao.total} tentativas concluídas.</p><button className={botao} disabled={ocupado} onClick={() => void continuar()}>Continuar</button></section>
         ) : sessao.proxima ? (
           <section className="bg-branco border border-destaque-claro rounded-2xl p-6 space-y-5">
-            <p>Bloco {sessao.proxima.bloco} de 3 · tentativa {(sessao.proxima.ordem - 1) % 9 + 1} de 9</p>
+            <p>Bloco {sessao.proxima.bloco} de 3 · tentativa {(sessao.proxima.ordem - 1) % totalBlocoAtual + 1} de {totalBlocoAtual}</p>
             <h2 className="text-2xl font-semibold">Estime {sessao.proxima.tempo_alvo_ms / 1000} segundos</h2>
             <p>Toque em Iniciar tentativa. Depois, toque em Finalizar quando acreditar que o tempo terminou. Estime sem contar segundos ou bipes.</p>
             <p>Mantenha esta tela aberta durante a tentativa. Uma interrupção permite recomeçar a mesma tentativa.</p>
             <button className={botao} onClick={() => void rodada.iniciar(sessao.proxima!, sessao.volume)}>Iniciar tentativa</button>
-            <p className="text-sm text-texto-secundario">{sessao.concluidas} de 27 tentativas concluídas. Os resultados ficam disponíveis no encerramento.</p>
+            <p className="text-sm text-texto-secundario">{sessao.concluidas} de {sessao.total} tentativas concluídas. Os resultados ficam disponíveis no encerramento.</p>
           </section>
         ) : null}
       </main>

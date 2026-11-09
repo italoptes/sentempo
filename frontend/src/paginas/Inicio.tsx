@@ -123,7 +123,7 @@ export function Inicio({
       <main id="conteudo-principal" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-8">
         <section aria-labelledby="titulo-estudo-a" className="bg-branco rounded-2xl border border-borda-controle p-6 space-y-4">
           <h1 id="titulo-estudo-a" className="text-xl font-semibold">Estudo de percepção temporal</h1>
-          <p>Uma participação guiada com 27 tentativas e pausas entre três blocos. Você poderá retomar de onde parou.</p>
+          <p>Uma participação guiada com 9 tentativas e pausas entre três blocos. Você poderá retomar de onde parou.</p>
           <button type="button" onClick={() => navigate('/estudo-a')} className="min-h-12 rounded-xl px-6 py-3 bg-destaque text-principal font-semibold">Participar ou retomar estudo</button>
         </section>
         <details className="space-y-6">

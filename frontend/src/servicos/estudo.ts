@@ -1,6 +1,7 @@
 import { requisicao } from './api';
 
 export type CondicaoEstudo = 'SEM_ESTIMULO' | 'LENTO' | 'RAPIDO';
+export type VersaoEstudo = 'ESTUDO_A_V1' | 'ESTUDO_A_V2';
 export interface PosicaoEstudo {
   id: string;
   ordem: number;

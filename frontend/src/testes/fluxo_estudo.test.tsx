@@ -13,8 +13,8 @@ vi.mock('../servicos/estudo', async importar => {
 });
 const posicao: PosicaoEstudo = { id: 't1', ordem: 1, bloco: 1, repeticao: 1, condicao: 'SEM_ESTIMULO', tempo_alvo_ms: 10000,
   concluida: false, resultado_ms: null, erro_ms: null, erro_absoluto_ms: null, erro_relativo_percentual: null };
-const sessao: SessaoEstudo = { id: 's1', versao_protocolo: 'ESTUDO_A_V1', sequencia: 0, ordem_condicoes: ['SEM_ESTIMULO', 'LENTO', 'RAPIDO'], dispositivo: 'COMPUTADOR', usa_fones: false,
-  volume: 0.5, consentido_em: '2026-11-04T10:00:00Z', concluida_em: null, bloco_liberado: 1, concluidas: 0, total: 27,
+const sessao: SessaoEstudo = { id: 's1', versao_protocolo: 'ESTUDO_A_V2', sequencia: 0, ordem_condicoes: ['SEM_ESTIMULO', 'LENTO', 'RAPIDO'], dispositivo: 'COMPUTADOR', usa_fones: false,
+  volume: 0.5, consentido_em: '2026-11-04T10:00:00Z', concluida_em: null, bloco_liberado: 1, concluidas: 0, total: 9,
   situacao: 'EM_ANDAMENTO', proxima: posicao, blocos: [], tentativas: [posicao], questionario_pendente: null, respostas_blocos: [], estrategia: null, comentario: null };
 beforeEach(() => {
   Object.defineProperty(document, 'hidden', { configurable: true, value: false });
@@ -33,7 +33,7 @@ it('informa alvo antes de iniciar e o oculta durante a medição e questionário
   fireEvent.click(screen.getByRole('button', { name: 'Iniciar tentativa' }));
   const finalizar = await screen.findByRole('button', { name: 'Finalizar' });
   expect(screen.queryByText(/Estime 10 segundos/)).toBeNull();
-  expect(screen.queryByText(/de 27/)).toBeNull();
+  expect(screen.queryByText(/de 9/)).toBeNull();
   expect(screen.queryByRole('progressbar')).toBeNull();
   fireEvent.click(finalizar);
   expect(await screen.findByText('Quão confiante você está de que finalizou próximo do tempo-alvo?')).toBeTruthy();
@@ -41,11 +41,11 @@ it('informa alvo antes de iniciar e o oculta durante a medição e questionário
   fireEvent.click(screen.getByLabelText('Prefiro não responder'));
   fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
   await waitFor(() => expect(responderQuestionario).toHaveBeenCalledWith('p1', { tipo: 'TENTATIVA', tentativa_id: 't1', confianca: null }));
-  expect(await screen.findByText('Bloco 1 de 3 · tentativa 2 de 9')).toBeTruthy();
+  expect(await screen.findByText('Bloco 1 de 3 · tentativa 2 de 3')).toBeTruthy();
 });
 
 it('pausa depende de continuar e não cria próximo bloco após encerramento', async () => {
-  const intervalo = { ...sessao, situacao: 'INTERVALO' as const, concluidas: 9, proxima: { ...posicao, ordem: 10, bloco: 2 } };
+  const intervalo = { ...sessao, situacao: 'INTERVALO' as const, concluidas: 3, proxima: { ...posicao, ordem: 4, bloco: 2 } };
   vi.mocked(consultarEstudo).mockResolvedValue(intervalo);
   vi.mocked(continuarEstudo).mockResolvedValue({ ...intervalo, situacao: 'EM_ANDAMENTO', bloco_liberado: 2 });
   const vista = montar();
@@ -56,9 +56,9 @@ it('pausa depende de continuar e não cria próximo bloco após encerramento', a
   expect(await screen.findByRole('button', { name: 'Iniciar tentativa' })).toBeTruthy();
   expect(continuarEstudo).toHaveBeenCalledTimes(1);
   vista.unmount();
-  vi.mocked(consultarEstudo).mockResolvedValue({ ...sessao, situacao: 'CONCLUIDA', proxima: null, concluidas: 27, concluida_em: '2026-11-04T10:15:00Z' });
+  vi.mocked(consultarEstudo).mockResolvedValue({ ...sessao, situacao: 'CONCLUIDA', proxima: null, concluidas: 9, concluida_em: '2026-11-04T10:15:00Z' });
   montar();
-  expect(await screen.findByRole('heading', { name: 'As 27 tentativas foram concluídas' })).toBeTruthy();
+  expect(await screen.findByRole('heading', { name: 'As 9 tentativas foram concluídas' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Continuar' })).toBeNull();
 });
 
@@ -66,7 +66,9 @@ it('mantém o teste de áudio disponível após falha, sem liberar participaçã
   vi.mocked(consultarEstudo).mockResolvedValue(null);
   vi.mocked(prepararAudioEstudo).mockRejectedValue(new Error('Áudio bloqueado'));
   montar();
-  fireEvent.click(await screen.findByRole('button', { name: 'Testar áudio' }));
+  const testar = await screen.findByRole('button', { name: 'Testar áudio' });
+  expect(screen.getByText(/três blocos de três tentativas, totalizando 9 tentativas/)).toBeTruthy();
+  fireEvent.click(testar);
   await screen.findByText('Não foi possível reproduzir o áudio. Verifique as permissões e teste novamente.');
   expect(screen.getByRole('button', { name: 'Testar áudio' })).toBeTruthy();
   expect((screen.getByRole('button', { name: 'Iniciar participação' }) as HTMLButtonElement).disabled).toBe(true);
