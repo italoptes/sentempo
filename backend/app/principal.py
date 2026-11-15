@@ -4,9 +4,11 @@ from slowapi.errors import RateLimitExceeded
 
 from app.nucleo.configuracoes import obter_configuracoes
 from app.nucleo.limitador import handler_limite_excedido, limitador
+from app.nucleo.logs import configurar_logs
 from app.rotas import administracao, estudo, modo_livre, participantes, saude, tentativas
 
 
+configurar_logs()
 configuracoes = obter_configuracoes()
 documentacao = configuracoes.ambiente.lower() != "producao"
 
