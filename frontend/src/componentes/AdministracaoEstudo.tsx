@@ -1,23 +1,13 @@
 import { useEffect, useState } from 'react';
 import { requisicao } from '../servicos/api';
-import type { SessaoEstudo, VersaoEstudo } from '../servicos/estudo';
+import type { VersaoEstudo } from '../servicos/estudo';
 import { rotularCondicaoEstudo } from '../servicos/estudo';
 import { SessaoAdministracao } from './SessaoAdministracao';
 import { MetricasAdministracao } from './MetricasAdministracao';
 import { IndicadorCarregamento } from './IndicadorCarregamento';
 import { formatarErro, formatarSegundos } from '../utilitarios/formatacao';
-
-interface PainelEstudo {
-  versao_protocolo: string;
-  sessoes_total: number;
-  sessoes_completas: number;
-  tentativas_concluidas: number;
-  pagina: number;
-  total_paginas: number;
-  sessoes: (SessaoEstudo & { codigo_participante: string; nome_participante: string })[];
-  estatisticas: { condicao: string; tempo_alvo_ms: number; quantidade: number; erro_medio_ms: number;
-    erro_absoluto_medio_ms: number; erro_relativo_medio_percentual: number; abaixo: number; acima: number; igual: number }[];
-}
+import type { PainelEstudo } from '../tipos/administracao';
+import { AnaliseResultadosEstudo } from './AnaliseResultadosEstudo';
 
 export function AdministracaoEstudo({ token, versao = 'ESTUDO_A_V2' }: { token: string; versao?: VersaoEstudo }) {
   const [painel, definirPainel] = useState<PainelEstudo | null>(null);
@@ -44,9 +34,10 @@ export function AdministracaoEstudo({ token, versao = 'ESTUDO_A_V2' }: { token: 
       <MetricasAdministracao itens={[
         ['Sessões iniciadas', painel.sessoes_total], ['Sessões completas', painel.sessoes_completas], ['Tentativas confirmadas', painel.tentativas_concluidas],
       ]} />
+      {painel.analise && <AnaliseResultadosEstudo analise={painel.analise} />}
       {painel.estatisticas.length ? <details className="overflow-hidden rounded-2xl border border-destaque-claro bg-branco">
         <summary className="cursor-pointer px-4 py-4 font-semibold marker:text-destaque">
-          <span className="block text-xs font-normal text-texto-secundario mb-1">Médias de todas as tentativas confirmadas</span>
+          <span className="block text-xs font-normal text-texto-secundario mb-1">Acompanhamento: inclui tentativas de sessões em andamento</span>
           Resultados por condição e tempo
           <span className="ml-2 text-sm font-normal text-texto-secundario">Clique para abrir ou recolher</span>
         </summary>
