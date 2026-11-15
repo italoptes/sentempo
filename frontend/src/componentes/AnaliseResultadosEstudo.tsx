@@ -71,6 +71,18 @@ function resumoComparacao(comparacao: ComparacaoPareadaEstudo | undefined, metri
   return `${magnitude} ${valor < 0 ? 'mais cedo' : 'mais tarde'} que no silêncio.`;
 }
 
+function LegendaLeituraGrafico({ metrica }: { metrica: Metrica }) {
+  const explicacao = metrica === 'ERRO_ASSINADO'
+    ? 'A linha zero representa o alvo. Abaixo dela, a parada foi antecipada; acima, foi tardia.'
+    : metrica === 'ERRO_ABSOLUTO'
+      ? 'Quanto menor a barra, mais perto do alvo. Erros antecipados e tardios não se cancelam.'
+      : 'Mostra o desvio proporcional ao alvo. Valores negativos indicam antecipação; positivos, atraso.';
+
+  return <aside aria-label="Como ler o gráfico" className="rounded-xl border border-destaque-claro bg-fundo px-4 py-3 text-sm">
+    <p><strong>Como ler:</strong> {explicacao}</p>
+  </aside>;
+}
+
 function GraficoResultados({ resultados, metrica }: { resultados: ResultadoAnaliseEstudo[]; metrica: Metrica }) {
   const largura = 900;
   const topo = 30;
@@ -212,12 +224,6 @@ export function AnaliseResultadosEstudo({ analise }: { analise: AnaliseEstudo })
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-destaque-claro bg-branco p-5">
-        <p className="text-sm font-medium text-texto-secundario">Recorte analisado</p>
-        <h2 className="mt-1 text-xl font-semibold">Estudo A · V2 · Sessões concluídas · {analise.participantes} {analise.participantes === 1 ? 'participante' : 'participantes'}</h2>
-        <p className="mt-2 text-sm text-texto-secundario">Cada pessoa contribui com uma observação por condição e alvo. Sessões em andamento ficam fora destes resultados.</p>
-      </header>
-
       <section aria-labelledby="titulo-resultado-principal" className="rounded-2xl border border-destaque-claro bg-branco p-5 space-y-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-texto-secundario">Resultado principal</p>
@@ -234,6 +240,7 @@ export function AnaliseResultadosEstudo({ analise }: { analise: AnaliseEstudo })
             ))}
           </div>
         </fieldset>
+        <LegendaLeituraGrafico metrica={metrica} />
         {analise.participantes === 0 ? (
           <p className="rounded-xl bg-fundo p-4 text-sm text-texto-secundario">Ainda não há sessões concluídas para esta análise. As sessões iniciadas continuam disponíveis na área de acompanhamento abaixo.</p>
         ) : (

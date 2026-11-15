@@ -31,14 +31,10 @@ export function AdministracaoEstudo({ token, versao = 'ESTUDO_A_V2' }: { token: 
     {erro && <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{erro}</p>}
     {carregando && <IndicadorCarregamento mensagem="Consultando Estudo A..." />}
     {painel && painel.versao_protocolo === versao && <>
-      {painel.analise && <AnaliseResultadosEstudo analise={painel.analise} />}
-      <div className="space-y-1 pt-2">
-        <h3 className="text-lg font-semibold">Acompanhamento da coleta</h3>
-        <p className="text-sm text-texto-secundario">Totais operacionais da versão, incluindo sessões que ainda estão em andamento.</p>
-      </div>
       <MetricasAdministracao itens={[
         ['Sessões iniciadas', painel.sessoes_total], ['Sessões completas', painel.sessoes_completas], ['Tentativas confirmadas', painel.tentativas_concluidas],
       ]} />
+      {painel.analise && <AnaliseResultadosEstudo analise={painel.analise} />}
       {painel.estatisticas.length ? <details className="overflow-hidden rounded-2xl border border-destaque-claro bg-branco">
         <summary className="cursor-pointer px-4 py-4 font-semibold marker:text-destaque">
           <span className="block text-xs font-normal text-texto-secundario mb-1">Acompanhamento: inclui tentativas de sessões em andamento</span>

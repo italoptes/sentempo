@@ -97,9 +97,15 @@ it('abre nos resultados de sessões concluídas e interpreta a comparação pare
   });
 
   render(<AdministracaoEstudo token="token-teste" />);
-  expect(await screen.findByText('Estudo A · V2 · Sessões concluídas · 2 participantes')).toBeTruthy();
+  const primeiroIndicador = await screen.findByText('Sessões iniciadas');
+  const tituloResultado = screen.getByRole('heading', { name: 'Condições por tempo-alvo' });
+  const blocoIndicadores = primeiroIndicador.closest('dl');
+  expect(blocoIndicadores).not.toBeNull();
+  expect((blocoIndicadores?.compareDocumentPosition(tituloResultado) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.queryByText('Recorte analisado')).toBeNull();
   expect(screen.getByTestId('grafico-resultados-estudo')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Erro assinado médio' }).getAttribute('aria-pressed')).toBe('true');
+  expect(screen.getByText(/A linha zero representa o alvo/)).toBeTruthy();
   expect(screen.getByText('0,600 s mais cedo que no silêncio.')).toBeTruthy();
   expect(screen.getByText('Diferença individual de tempo: 1 mais cedo · 1 mais tarde · 0 no mesmo tempo.')).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'Distribuição individual' })).toBeTruthy();
@@ -108,6 +114,7 @@ it('abre nos resultados de sessões concluídas e interpreta a comparação pare
   expect(screen.getAllByText('Contagem dos bipes').length).toBeGreaterThan(0);
 
   fireEvent.click(screen.getByRole('button', { name: 'Erro absoluto médio' }));
+  expect(screen.getByText(/Quanto menor a barra, mais perto do alvo/)).toBeTruthy();
   expect(screen.getByText('0,600 s mais longe do alvo que no silêncio.')).toBeTruthy();
   expect(screen.getAllByText(/n = 2/)).toHaveLength(9);
 });
