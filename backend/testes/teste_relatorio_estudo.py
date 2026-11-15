@@ -4,7 +4,9 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from app.entidades.estudo import SessaoEstudo, TentativaEstudo
+from sqlalchemy import select
+
+from app.entidades.estudo import RespostaBloco, SessaoEstudo, TentativaEstudo
 from app.entidades.participante import Participante
 from app.entidades.tempo_personalizado import TempoPersonalizado
 from app.entidades.tentativa import Tentativa, TipoTentativa
@@ -55,6 +57,32 @@ def _criar_participantes_analise() -> list[str]:
         banco.add_all(participantes)
         banco.commit()
         return [str(participante.id) for participante in participantes]
+
+
+def _preencher_questionarios_analise(
+    participante_id: str,
+    estrategia: str | None,
+    confianca: int | None,
+    agradabilidade: int | None,
+    ansiedade: int | None,
+) -> None:
+    with _FabricaSessaoTestes() as banco:
+        sessao = banco.scalar(select(SessaoEstudo).where(
+            SessaoEstudo.participante_id == uuid.UUID(participante_id)
+        ))
+        sessao.estrategia = estrategia
+        agora = datetime.now(timezone.utc)
+        for tentativa in sessao.tentativas:
+            tentativa.confianca = confianca
+            tentativa.respondida_em = agora
+        for bloco in (1, 2, 3):
+            sessao.respostas_blocos.append(RespostaBloco(
+                bloco=bloco,
+                agradabilidade=agradabilidade,
+                ansiedade=ansiedade,
+                respondida_em=agora,
+            ))
+        banco.commit()
 
 
 def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, token_administrativo):
@@ -193,3 +221,55 @@ def test_analise_v2_explicita_celulas_e_pares_ausentes():
     assert all(item["erro_assinado_medio_ms"] is None for item in analise["resultados"])
     assert len(analise["comparacoes"]) == 6
     assert all(item["pares"] == 0 for item in analise["comparacoes"])
+
+
+def test_distribuicoes_e_questionarios_respeitam_unidade_da_resposta():
+    participantes = _criar_participantes_analise()
+    _criar_sessao_analitica(participantes[0], {
+        ("SEM_ESTIMULO", 10000): -600,
+        ("RAPIDO", 10000): -1200,
+    })
+    _criar_sessao_analitica(participantes[1], {
+        ("SEM_ESTIMULO", 10000): 600,
+        ("RAPIDO", 10000): 1200,
+    })
+    _preencher_questionarios_analise(participantes[0], "CONTAGEM_BIPES", 7, 6, 2)
+    _preencher_questionarios_analise(participantes[1], None, None, 6, None)
+
+    with _FabricaSessaoTestes() as banco:
+        analise = RelatorioEstudoServico(banco).painel(pagina=1, tamanho=10)["analise"]
+
+    silencio = next(item for item in analise["resultados"]
+        if item["condicao"] == "SEM_ESTIMULO" and item["tempo_alvo_ms"] == 10000)
+    assert silencio["distribuicao"]["erro_assinado"] == {"mediana": 0, "q1": -300, "q3": 300}
+    assert silencio["distribuicao"]["erro_absoluto"]["mediana"] == 600
+    assert len(silencio["distribuicao"]["observacoes"]) == 2
+
+    rapido = next(item for item in analise["comparacoes"]
+        if item["condicao"] == "RAPIDO" and item["tempo_alvo_ms"] == 10000)
+    assert sorted(item["erro_assinado_ms"] for item in rapido["diferencas_individuais"]) == [-600, 600]
+
+    questionarios = analise["questionarios"]
+    confianca_sete = next(item for item in questionarios["confianca"]
+        if item["condicao"] == "SEM_ESTIMULO" and item["tempo_alvo_ms"] == 10000 and item["nota"] == 7)
+    assert confianca_sete["tentativas"] == 1 and confianca_sete["participantes"] == 1
+    assert confianca_sete["erro_absoluto_mediano_ms"] == 600
+    recusa_confianca = next(item for item in questionarios["confianca"]
+        if item["condicao"] == "SEM_ESTIMULO" and item["tempo_alvo_ms"] == 10000 and item["nota"] is None)
+    assert recusa_confianca["tentativas"] == 1
+
+    agradabilidade = next(item for item in questionarios["respostas_por_bloco"]
+        if item["medida"] == "AGRADABILIDADE" and item["condicao"] == "LENTO" and item["nota"] == 6)
+    assert agradabilidade["respostas"] == 2  # Uma por bloco, sem repetir pelas tentativas.
+    resumo_ansiedade = next(item for item in questionarios["resumos_blocos"]
+        if item["medida"] == "ANSIEDADE" and item["condicao"] == "LENTO")
+    assert resumo_ansiedade == {"medida": "ANSIEDADE", "condicao": "LENTO", "mediana": 2,
+        "respostas_validas": 1, "recusas": 1}
+
+    assert {(item["categoria"], item["participantes"]) for item in questionarios["estrategias"]} == {
+        ("CONTAGEM_BIPES", 1), ("PREFERIU_NAO_RESPONDER", 1)
+    }
+    estrategia = next(item for item in questionarios["comparacoes_por_estrategia"]
+        if item["estrategia"] == "CONTAGEM_BIPES" and item["condicao"] == "RAPIDO"
+        and item["tempo_alvo_ms"] == 10000)
+    assert estrategia["pares"] == 1 and estrategia["diferenca_erro_assinado_media_ms"] == -600

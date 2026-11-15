@@ -82,6 +82,8 @@ class RelatorioEstudoServico:
             for linha in linhas
         }
         blocos_grupos: dict[tuple[str, str, int | None], set] = {}
+        blocos_valores: dict[tuple[str, str], list[int]] = {}
+        blocos_recusas: dict[tuple[str, str], int] = {}
         for resposta in respostas_blocos:
             condicao = condicao_por_bloco.get((resposta.sessao_id, resposta.bloco))
             if condicao is None:
@@ -91,6 +93,10 @@ class RelatorioEstudoServico:
                 ("ANSIEDADE", resposta.ansiedade),
             ):
                 blocos_grupos.setdefault((medida, condicao, nota), set()).add(resposta.participante_id)
+                if nota is None:
+                    blocos_recusas[(medida, condicao)] = blocos_recusas.get((medida, condicao), 0) + 1
+                else:
+                    blocos_valores.setdefault((medida, condicao), []).append(nota)
         respostas_por_bloco = [{
             "medida": medida,
             "condicao": condicao,
@@ -101,6 +107,17 @@ class RelatorioEstudoServico:
             blocos_grupos.items(),
             key=lambda item: (item[0][0], item[0][1], item[0][2] is None, item[0][2] or 0),
         )]
+        chaves_blocos = set(blocos_valores) | set(blocos_recusas)
+        resumos_blocos = [{
+            "medida": medida,
+            "condicao": condicao,
+            "mediana": self._percentil(
+                [Decimal(nota) for nota in blocos_valores.get((medida, condicao), [])],
+                Decimal("0.5"),
+            ),
+            "respostas_validas": len(blocos_valores.get((medida, condicao), [])),
+            "recusas": blocos_recusas.get((medida, condicao), 0),
+        } for medida, condicao in sorted(chaves_blocos)]
 
         sessoes = self.banco.execute(
             select(SessaoEstudo.id, SessaoEstudo.estrategia)
@@ -151,6 +168,7 @@ class RelatorioEstudoServico:
         return {
             "confianca": confianca,
             "respostas_por_bloco": respostas_por_bloco,
+            "resumos_blocos": resumos_blocos,
             "estrategias": estrategias,
             "comparacoes_por_estrategia": comparacoes_por_estrategia,
         }
