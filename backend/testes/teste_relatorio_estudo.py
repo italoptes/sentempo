@@ -1,12 +1,60 @@
 import csv
 import io
 import uuid
+from datetime import datetime, timezone
+from decimal import Decimal
 
+from app.entidades.estudo import SessaoEstudo, TentativaEstudo
+from app.entidades.participante import Participante
 from app.entidades.tempo_personalizado import TempoPersonalizado
 from app.entidades.tentativa import Tentativa, TipoTentativa
+from app.servicos.relatorio_estudo_servico import RelatorioEstudoServico
 from testes.conftest import _FabricaSessaoTestes
 
 from testes.teste_estudo import DADOS, criar_sessao_v1, endereco
+
+
+def _criar_sessao_analitica(participante_id: str, erros: dict[tuple[str, int], int], concluida: bool = True) -> None:
+    with _FabricaSessaoTestes() as banco:
+        sessao = SessaoEstudo(
+            participante_id=uuid.UUID(participante_id),
+            versao_protocolo="ESTUDO_A_V2",
+            sequencia=0,
+            bloco_liberado=3,
+            dispositivo="COMPUTADOR",
+            usa_fones=True,
+            volume=Decimal("0.5"),
+            concluida_em=datetime.now(timezone.utc) if concluida else None,
+        )
+        for bloco, condicao in enumerate(("SEM_ESTIMULO", "LENTO", "RAPIDO"), 1):
+            for posicao, tempo in enumerate((5000, 10000, 15000), 1):
+                erro = Decimal(erros.get((condicao, tempo), 0))
+                sessao.tentativas.append(TentativaEstudo(
+                    ordem=(bloco - 1) * 3 + posicao,
+                    bloco=bloco,
+                    tamanho_bloco=3,
+                    repeticao=1,
+                    condicao=condicao,
+                    tempo_alvo_ms=tempo,
+                    resultado_ms=Decimal(tempo) + erro,
+                    erro_ms=erro,
+                    erro_absoluto_ms=abs(erro),
+                    erro_relativo_percentual=Decimal(100) * erro / Decimal(tempo),
+                    concluida_em=datetime.now(timezone.utc),
+                ))
+        banco.add(sessao)
+        banco.commit()
+
+
+def _criar_participantes_analise() -> list[str]:
+    with _FabricaSessaoTestes() as banco:
+        participantes = [
+            Participante(nome=nome, nome_normalizado=nome.casefold(), codigo=codigo)
+            for nome, codigo in (("Pessoa Um", "0001"), ("Pessoa Dois", "0002"), ("Pendente", "0003"))
+        ]
+        banco.add_all(participantes)
+        banco.commit()
+        return [str(participante.id) for participante in participantes]
 
 
 def test_relatorios_e_exportacoes_separam_protocolos(cliente, participante, token_administrativo):
@@ -85,3 +133,63 @@ def test_painel_livre_vazio(cliente, token_administrativo):
     assert resposta.status_code == 200
     assert resposta.json() == {"participantes_total": 0, "tentativas_total": 0, "tempos_total": 0,
         "pagina": 1, "total_paginas": 0, "estatisticas": [], "tentativas": []}
+
+
+def test_analise_v2_usa_sessoes_concluidas_e_pareia_por_participante():
+    participantes = _criar_participantes_analise()
+    _criar_sessao_analitica(participantes[0], {
+        ("SEM_ESTIMULO", 10000): -600,
+        ("RAPIDO", 10000): -1200,
+    })
+    _criar_sessao_analitica(participantes[1], {
+        ("SEM_ESTIMULO", 10000): 600,
+        ("RAPIDO", 10000): 1200,
+    })
+    # O resultado extremo desta sessão aparece no acompanhamento, mas não na amostra principal.
+    _criar_sessao_analitica(participantes[2], {
+        ("SEM_ESTIMULO", 10000): 4000,
+        ("RAPIDO", 10000): 4000,
+    }, concluida=False)
+
+    with _FabricaSessaoTestes() as banco:
+        painel = RelatorioEstudoServico(banco).painel(pagina=1, tamanho=1)
+    analise = painel["analise"]
+    assert painel["sessoes_total"] == 3
+    assert painel["sessoes_completas"] == 2
+    assert analise["criterio_inclusao"] == "SESSOES_CONCLUIDAS"
+    assert analise["participantes"] == 2
+    assert len(analise["resultados"]) == 9
+
+    silencio = next(
+        item for item in analise["resultados"]
+        if item["condicao"] == "SEM_ESTIMULO" and item["tempo_alvo_ms"] == 10000
+    )
+    assert silencio["participantes"] == 2
+    assert silencio["erro_assinado_medio_ms"] == 0
+    assert silencio["erro_absoluto_medio_ms"] == 600
+    assert silencio["erro_relativo_medio_percentual"] == 0
+
+    rapido = next(
+        item for item in analise["comparacoes"]
+        if item["condicao"] == "RAPIDO" and item["tempo_alvo_ms"] == 10000
+    )
+    assert rapido["pares"] == 2
+    assert rapido["diferenca_erro_assinado_media_ms"] == 0
+    assert rapido["diferenca_erro_absoluto_media_ms"] == 600
+    assert rapido["diferenca_erro_relativo_media_pp"] == 0
+    assert (rapido["mais_cedo"], rapido["mais_tarde"], rapido["mesmo_tempo"]) == (1, 1, 0)
+
+    with _FabricaSessaoTestes() as banco:
+        outra_pagina = RelatorioEstudoServico(banco).painel(pagina=2, tamanho=1)
+    assert outra_pagina["analise"] == analise
+
+
+def test_analise_v2_explicita_celulas_e_pares_ausentes():
+    with _FabricaSessaoTestes() as banco:
+        analise = RelatorioEstudoServico(banco).painel(pagina=1, tamanho=10)["analise"]
+    assert analise["participantes"] == 0
+    assert len(analise["resultados"]) == 9
+    assert all(item["participantes"] == 0 for item in analise["resultados"])
+    assert all(item["erro_assinado_medio_ms"] is None for item in analise["resultados"])
+    assert len(analise["comparacoes"]) == 6
+    assert all(item["pares"] == 0 for item in analise["comparacoes"])
